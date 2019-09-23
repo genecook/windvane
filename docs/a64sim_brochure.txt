@@ -1,0 +1,53 @@
+a64sim
+======
+:Author:    Tuleta Software Co.
+:Email:     <gene@tuletasoftware.com>
+:Date:      10/5/2017
+:Revision:  1.0-alpha
+
+Features
+--------
+*a64sim* is a stand-alone _arm64_ microprocessor software simulator.
+
+*a64sim* is convenient and easy to use.
+
+Using *a64sim*, the user may simulate programs compiled for the _ARM64_ processor, for a single core or multiple cores*
+
+Memory accessed during simulation is dynamically allocated up to the configured maximum amount**.
+
+A simulation trace facility allows the user to create a trace of execution for a program under simulation.
+
+Programs to be simulated (object file or binary) may also be debugged via the *a64sim* _gdb server- interface.
+
+Salient features of the *a64sim* simulator:
+
+	- Simulation of ARM Aarch64 microprocessor:
+	  * 64-bit Integer instructions
+	  * Load/Store exclusives
+	  * Event related instructions
+	  * Single/double/half precision floating point instructions
+	  * System instructions
+	  * Exception levels EL0, EL1, EL3
+	  * 64-bit VMSA
+	  * Secure/Non-Secure modes of operation
+	- Single or multicore configuration
+	- Wait states, global monitor
+	- ARM Semihosting support
+	- GDB debug support
+	- Simulation trace facility with external graphical viewer
+	- ELF reader, writer
+	- Instruction disassembly
+
+
+The *a64sim_traceviewer* is a graphical tool for viewing simulation traces produced by the *a64* simulator.
+
+Using *a64sim_traceviewer*, the user may load a simulation trace and review instruction execution over time.
+
+Instruction decode, registers, system state, and memory accesses may be ascertained at any point along a simulation.
+
+
+
+*Up to 256 cores in the current configuration.
+
+**The amount of physical memory currently configured is 4g.
+

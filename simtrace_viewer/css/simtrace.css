@@ -1,0 +1,21 @@
+.root{
+    -fx-background-image: url("background.jpg");
+}
+
+.label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.5) , 0,0,0,1 );
+}
+
+.table-view .table-cell {
+    -fx-text-fill: -fx-selection-bar-text;
+    -fx-font-size: 16;
+    -fx-font-family: monospace;
+}
+
+.menu-bar{
+  -fx-background-color: aliceblue;
+  -fx-border-width: 2
+}

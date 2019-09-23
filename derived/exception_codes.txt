@@ -1,0 +1,350 @@
+
+EC: 000000
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Unknown or Uncategorized Reason - generally used for exceptions as a result of erroneous execution.
+encoding: See ISS encoding for an exception with an unknown reason.
+page: D7-1837
+
+EC: 000001
+AArch32: 1
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions from WFE/WFI from either AArch32 or AArch64 as a result of configurable traps, enables, or disables.Conditional WFE and WFI instructions that fail their condition code check do not cause an exception.
+encoding: See ISS encoding for an exception from a WFI or WFE instruction.  
+page: D7-1837
+
+EC: 000011
+AArch32: 1
+AArch64: 0
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions from MCR/MRC to CP15 from AArch32 as a result of configurable traps, enables, or disables that do not use code 0b000000.
+encoding: See ISS encoding for an exception from an MCR or MRC access from AArch32 state
+page: D7-1839
+
+EC: 000100
+AArch32: 1
+AArch64: 0
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions from MCRR/MRRC to CP15 from AArch32 as a result of configurable traps, enables, or disables that do not use code 0b000000.
+encoding: See ISS encoding for an exception from an MCRR or MRRC access from AArch32 state.
+page: D7-1840
+
+EC: 000101
+AArch32: 1
+AArch64: 0
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions from MCR/MRC to CP14 from AArch32 as a result of configurable traps, enables, or disables that do not use code 0b000000.
+encoding: See ISS encoding for an exception from an MCR or MRC access from AArch32 state.
+page: D7-1839
+
+EC: 000110
+AArch32: 1
+AArch64: 0
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions from LDC/STC to CP14 from AArch32 as a result of configurable traps, enables, or disables. Note The only architected uses of these instructions to access CP14 are:• An STC to write to DBGDTRRX_EL0 or DBGDTRRXint.• An LDC to read from DBGDTRTX_EL0 or DBGDTRTXint.
+encoding: See ISS encoding for an exception from an LDC or STC access to CP14 from AArch32 state.
+page: D7-1842
+
+EC: 000111
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions from access to Advanced SIMD or Floating Point as a result of configurable traps, enables, or disables.
+encoding: See ISS encoding for an exception from an access to a SIMD or floating-point register.
+page: D7-1844
+
+EC: 001000
+AArch32: 1
+AArch64: 0
+EL1: 0
+EL2: 1
+EL3: 0
+description: Exceptions from MRC (or VMRS) to CP10 for MVFR0, MVFR1, MVFR2, or FPSID of ID Group traps from AArch32 unless reported using code 0b000111.
+encoding: See ISS encoding for an exception from an MCR or MRC access from AArch32 state.
+page: D7-1839
+
+EC: 001100
+AArch32: 1
+AArch64: 0
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions from MCRR/MRRC to CP14 from AArch32 as a result of configurable traps, enables, or disables.
+encoding: See ISS encoding for an exception from an MCRR or MRRC access from AArch32 state.  
+page: D7-1840
+
+EC: 001110
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions that occur because the value of PSTATE.IL is 1.
+encoding: See ISS encoding for an exception from an Illegal Execution state, PC alignment fault, or SP alignment fault.
+page: D7-1845
+
+EC: 010001
+AArch32: 1
+AArch64: 0
+EL1: 1
+EL2: 1
+EL3: 0
+description: SVC executed in AArch32.
+encoding: See ISS encoding for an exception from HVC or SVC instruction execution.
+page: D7-1845
+
+EC: 010010
+AArch32: 1
+AArch64: 0
+EL1: 0
+EL2: 1
+EL3: 0
+description: HVC that is not disabled executed in AArch32.
+encoding: See ISS encoding for an exception from HVC or SVC instruction execution.
+page: D7-1845
+
+EC: 010011
+AArch32: 1
+AArch64: 0
+EL1: 0
+EL2: 1
+EL3: 1
+description: SMC that is not disabled executed in AArch32.
+encoding: See ISS encoding for an exception from SMC instruction execution in AArch32 state.
+page: D7-1846
+
+EC: 010101
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: SVC executed in AArch64.
+encoding: See ISS encoding for an exception from HVC or SVC instruction execution.
+page: D7-1845
+
+EC: 010110
+AArch32: 0
+AArch64: 1
+EL1: 0
+EL2: 1
+EL3: 1
+description: HVC that is not disabled executed in AArch64.
+encoding: See ISS encoding for an exception from HVC or SVC instruction execution.
+page: D7-1845
+
+EC: 010111
+AArch32: 0
+AArch64: 1
+EL1: 0
+EL2: 1
+EL3: 1
+description: SMC that is not disabled executed in AArch64.
+encoding: See ISS encoding for an exception from SMC instruction execution in AArch64 state.
+page: D7-1846
+
+EC: 011000
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions as a result of MSR, MRS, or System AArch64 instructions as a result of configurable traps, enables, or disables, except those using codes 0b000000, 0b000001, or 0b000111.
+encoding: See ISS encoding for an exception from MSR, MRS, or System instruction execution in AArch64 state.
+page: D7-1847
+
+EC: 100000
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Instruction Abort that caused entry from a lower exception level (AArch32 or AArch64). Used for instruction access generated MMU faults and synchronous external aborts, including synchronous parity errors. Not used for debug related exceptions.
+encoding: See ISS encoding for an exception from an Instruction abort exception.D7-1834 Copyright © 2013 ARM Limited.  
+page: D7-1848
+
+EC: 100001
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Instruction Abort that caused entry from a current exception level (AArch64). Used for instruction access generated MMU faults and synchronous external aborts, including synchronous parity errors. Not used for debug related exceptions.
+encoding: See ISS encoding for an exception from an Instruction abort exception.
+page: D7-1848
+
+EC: 100010
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: PC Alignment Exception.
+encoding: See ISS encoding for an exception from an Illegal Execution state, PC alignment fault, or SP alignment fault.
+page: D7-1845
+
+EC: 100100
+AArch32: 1
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Data Abort that caused entry from a lower exception level (AArch32 or AArch64). Used for data access generated MMU faults, alignment faults other than those caused by the Stack Pointer misalignment, and synchronous external aborts, including synchronous parity errors. Not used for debug related exceptions.
+encoding: See ISS encoding for an exception from a Data abort exception.
+page: D7-1849
+
+EC: 100101
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Data Abort that caused entry from a current exception level (AArch64). Used for data access generated MMU faults, alignment faults other than those caused by the Stack Pointer misalignment, and synchronous external aborts, including synchronous parity errors. Not used for debug related exceptions.
+encoding: See ISS encoding for an exception from a Data abort exception.
+page: D7-1849
+
+EC: 100110
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Stack Pointer Alignment Exception.
+encoding: See ISS encoding for an exception from an Illegal Execution state, PC alignment fault, or SP alignment fault.
+page: D7-1845
+
+EC: 101000
+AArch32: 1
+AArch64: 0
+EL1: 1
+EL2: 1
+EL3: 0
+description: Exceptions as a result of Floating-point exception (optional feature) from AArch32.
+encoding: See ISS encoding for an exception from a floating-point exception.
+page: D7-1852
+
+EC: 101100
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: Exceptions as a result of Floating-point exception from AArch64.
+encoding: See ISS encoding for an exception from a floating-point exception.
+page: D7-1852
+
+EC: 101111
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: SError Interrupt.
+encoding: See ISS encoding for an SError interrupt.
+page: D7-1854
+
+EC: 110000
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 0
+description: Breakpoint debug event that caused entry from a lower exception level.
+encoding: See ISS encoding for a Breakpoint exception or Vector Catch exception. D7-1835ID122413 Non-Confidential - BetaD7 AArch64 
+page: D7-1854
+
+EC: 110001
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 0
+description: Breakpoint debug event that caused entry from a current exception level.
+encoding: See ISS encoding for a Breakpoint exception or Vector Catch exception.
+page: D7-1854
+
+EC: 110010
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 0
+description: Software step debug event that caused entry from a lower exception level.
+encoding: See ISS encoding for Software Step exception.
+page: D7-1857
+
+EC: 110011
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 0
+description: Software step debug event that caused entry from a current exception level.
+encoding: See ISS encoding for Software Step exception.
+page: D7-1857
+
+EC: 110100
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 0
+description: Watchpoint debug event that caused entry from a lower exception level.
+encoding: See ISS encoding for a Watchpoint exception.
+page: D7-1855
+
+EC: 110101
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 0
+description: Watchpoint debug event that caused entry from a current exception level.
+encoding: See ISS encoding for a Watchpoint exception.
+page: D7-1855
+
+EC: 111000
+AArch32: 1
+AArch64: 0
+EL1: 1
+EL2: 1
+EL3: 0
+description: BKPT instruction executed in AArch32 state.
+encoding: See ISS encoding for a Software Breakpoint Instruction exception.
+page: D7-1858
+
+EC: 111010
+AArch32: 0
+AArch64: 1
+EL1: 0
+EL2: 1
+EL3: 0
+description: AArch32 state Vector catch debug event.
+encoding: See ISS encoding for a Breakpoint exception or Vector Catch exception.
+page: D7-1854
+
+EC: 111100
+AArch32: 0
+AArch64: 1
+EL1: 1
+EL2: 1
+EL3: 1
+description: BRK instruction executed in AArch64 state.
+encoding: See ISS encoding for a Software Breakpoint Instruction exception.Other values are reserved.
+page: D7-1858

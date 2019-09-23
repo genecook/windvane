@@ -1,0 +1,49 @@
+a64sim
+======
+:Author:    Tuleta Software Co.
+:Email:     <gene@tuletasoftware.com>
+:Date:      5/19/2017
+:Revision:  1.0-alpha
+
+Links/Acknowledgements
+----------------------
+
+links to useful embedded discussions - bare metal linking, etc..
+
+
+https://en.wikipedia.org/wiki/ARM_architecture#AArch64_features[ARM Wiki - ARMv8-A features]
+
+https://www.arm.com/products/processors/armv8-architecture.php[ARMv8-A Architecture]
+
+https://developer.arm.com/docs/ddi0487/latest/arm-architecture-reference-manual-armv8-for-armv8-a-architecture-profile[ARM Architecture Reference Manual ARMv8]
+
+http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/CIHHGDBH.html[ARM Cortex-A Semihosting]
+
+http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dai0527a/index.html[Bare-metal Boot Code for ARMv8-A Processors]
+
+http://www.qemu.org/[QEMU processor emulator]
+
+http://www.unicorn-engine.org/[Unicorn CPU emulator]
+
+http://gem5.org/Main_Page[gem5 Simulator]
+
+https://www.gnu.org/software/gdb/[GNB: The GNU Project Debugger]
+
+http://www.embecosm.com/appnotes/ean4/embecosm-howto-rsp-server-ean4-issue-2.html[Howto: GDB Remote Serial Protocol]
+
+http://neptune.billgatliff.com/debugger.html[Implementing a Debugging Agent for the GNU Debugger - Bill Gatliff]
+
+https://sourceware.org/newlib/[Newlib C library]
+
+https://en.wikipedia.org/wiki/Newlib[Newlib Wiki]
+
+https://www.raspberrypi.org/products/raspberry-pi-3-model-b/[Raspberry PI3 - based on quad-core ARMv8]
+
+http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html[Java JDK - download page]
+
+http://dunkels.com/adam/ubasic/[Tiny Basic in C]
+
+https://github.com/marcobambini/gravity[Gravity Programming Language]
+
+http://janeaddamspeace.org/[Jane Addams Peace Association]
+

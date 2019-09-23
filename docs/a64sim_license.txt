@@ -1,0 +1,24 @@
+a64sim
+======
+:Author:    Tuleta Software Co.
+:Email:     <gene@tuletasoftware.com>
+:Date:      10/5/2017
+:Revision:  1.0-alpha
+
+Copyright Notice
+----------------
+Copyright  © 2017 Tuleta Software, Inc.
+
+License to use this software is granted, free of charge, on a individual, non-commercial
+basis only. Individuals are free to download and use the software free of charge, for
+personal educational use only.
+
+Usage, redistribution or deployment of this software for commercial purposes will require
+a commercial license. Licenses are available both for the (existing) binary release, or
+for a (pending) source code release.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL TULETA BE LIABLE FOR ANY CLAIM, DAMAGES
+OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -1,0 +1,29 @@
+a64sim
+======
+:Author:    Tuleta Software Co.
+:Email:     <gene@tuletasoftware.com>
+:Date:      10/5/2017
+:Revision:  1.0-alpha
+
+Features
+--------
+*a64sim* is a stand-alone _arm64_ microprocessor software simulator.
+
+Features include:
+
+	- Simulation of ARM Aarch64 microprocessor:
+	  * 64-bit Integer instructions
+	  * Load/Store exclusives
+	  * Event related instructions
+	  * Single/double/half precision floating point instructions
+	  * System instructions
+	  * Exception levels EL0, EL1, EL3
+	  * 64-bit VMSA
+	  * Secure/Non-Secure modes of operation
+	- Single or multicore configuration
+	- Wait states, global monitor
+	- ARM Semihosting support
+	- GDB debug support
+	- Simulation trace facility with external graphical viewer
+	- ELF reader, writer
+	- Instruction disassembly

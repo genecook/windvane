@@ -1,0 +1,163 @@
+a64sim
+======
+:Author:    Tuleta Software Co.
+:Email:     <gene@tuletasoftware.com>
+:Date:      10/5/2017
+:Revision:  1.0-alpha
+
+Introduction
+------------
+*a64sim* is a stand-alone _arm64_ microprocessor software simulator. Using the *a64sim*
+simulator, the user may simulate the execution of a single or multi-core _arm64_ processor with attached memory.
+The input to *a64sim* consists of one or more _ELF_ object or _ELF_ binary files.
+The output from *a64sim* may include an _ELF_ file and/or a _simulation trace_.
+
+link:a64sim_license.html[License, Copyright Notice]
+
+
+Command line operation
+----------------------
+From a command line, type 'a64sim -h' or 'a64sim --help' to cause a list of all command line options to be
+printed:
+
+.*a64sim* Help
+----
+gene@gene-MS-7850:$ ./bin/a64sim --help
+A64simulator/MP - Tuleta Software Co. Copyright 2017. All rights reserved.
+
+    command line options:
+        --help (or -h)                          -- print this help message.
+        --version (or -V)                       -- print tool version information.
+
+        --sim_load_file (or -L) <file path>     -- path to simulation source (ELF) file - (default is none)
+        --sim_save_file (or -S) <file path>     -- path to simulation output (ELF) file (default is none)
+
+        --sim_trace_file (or -T) <file path>    -- path to simulation trace file (default is none)
+
+        --num_cores (or -N) <count>             -- number of cores to enable (default is 1)
+        --max_instrs (or -n) <count>            -- Maximum number of instructions per core to simulate (default is 1000)
+
+        --port (or -P) <port>                   -- (TCP) port simulation debug server will listen on
+        --core (or -C) <core>                   -- ID of processor element simulation debug server will attach to
+
+        --freerun (or -F)                       -- Allow simulator to 'freerun' when uninitialized instruction memory encountered
+        --seed (or -S) <unsigned int>           -- initial seed to use when freerun enabled (default is random value)
+
+        --show_disassembly (or -D)              -- Print address/disassembly for each instruction during simulation
+
+        --app_cmdline (or -A)                   -- application cmdline + arguments. May be used by stand-alone C app.
+        --app_env (or -E)                       -- application environment. May be used by stand-alone C app.
+        --heap_base                             -- heap base address      - standalone C apps - semihosting
+        --heap_limit                            -- heap limit             -                "
+        --stack_base                            -- stack base address     -                "
+        --stack_limit                           -- stack limit            -                "
+        --env_ptr                               -- env buffer address     -                "
+        --cmdline_ptr                           -- cmdline buffer address -                "
+gene@gene-MS-7850$ 
+----
+
+Type 'a64sim --version' to view the tool version...
+
+.*a64sim* Version Information
+----
+gene@gene-MS-7850:$ ./bin/a64sim -V
+A64simulator/MP - Tuleta Software Co. Copyright 2017. All rights reserved.
+
+a64sim 1.0 Alpha
+gene@gene-MS-7850:$ 
+----
+
+Simulation load file
+--------------------
+The 'sim_load_file' command line argument may be used to specify the path to an 'ELF' object or 'ELF' binary file to be loaded into the
+simulator. One or more 'ELF' files may be loaded into memory. Each 'ELF' file option must be listed separately along with the '--sim_load_file'
+option.
+
+The 'ELF' file to be loaded must contain one or more '.text' or '.data' sections.
+
+The '.text' sections will include A64 instructions to be copied into main memory. The '.data' sections will include data bytes to be
+copied into main memory.
+
+Although instruction and data bytes are copied from each '.text' or '.data' directly into main memory, it is assumed that each (four byte)
+instruction opcode has been written to memory in 'little endian' memory order.
+
+Instructions and data are copied from the 'ELF' sections into physical memory. There is no support for relocation. Note also that only
+the memory addresses 'covered' by copying instructions and data into memory are initialized.
+
+Simulation save file
+--------------------
+The 'sim_save_file' command line argument may be used to specify the path to an 'ELF' binary file. At the end of simulation, the contents
+of main memory, the 'initial values', will be written to the specified 'ELF' file.
+
+All instructions and initial data values will be written to '.text' (instruction) and '.data' (data) sections, contained in a single 'ELF' segment.
+
+If the default maximum number of 'ELF' file sections that can be contained in a single segment is exceeded, 'extended ELF section numbering' will be employed.
+
+The 'ELF' file written is binary, represents physical memory (contains no relocation information), and no debug symbol information.
+
+Simulation trace file
+---------------------
+The 'sim_trace_file' command line argument may be used to specify the path to a simulation 'trace' file. One an instruction by instruction basis, instruction decode, register and memory updates are recorded. The resulting simulation 'trace' may be loaded and viewed via the 'a64_simtrace_viewer' tool.
+
+When the 'sim_trace_file' option is in play, the entire simulation, ie, all instruction executions for all processing elements (cores) will be recorded. While the trace file format is very compact, simulation run length (the # of instruction executions) versus disk space should be considered. As an example, a one thousand instruction, single core simulation results in a simulation trace file is around 800k bytes. Bump the instruction count to 10k instructions yields a simulation tarce file of around 8meg. 
+
+Core count
+----------
+The '--num_cores' command line argument may be used to specify how many processor cores are to be simulated. The default number of cores is one. The maximum number of cores for this release is limited to 256 (a single cluster with a maximum # of cores of 256. Probably will rethink this as its probably a more reasonable implementation
+to have multiple clusters of say four cores each).
+
+As in a 'real' chip implementation, each core runs fully independent of the other cores. The simulator uses clock cycles and a ready queue to schedule which cores are ready to run at any point in time. See the 'Simulation Configuration' section for more details on the processor configuration.
+
+All cores share the same processor configuration. For the 1.0 a64sim product release there is a single 4gig physical memory, shared by all cores. The
+'boot address' for all cores is the same, and thus from 'reset' all cores will execure the same code.
+
+Maximum instructions
+--------------------
+The '--max_instrs' command line argument may be used to specify the maximum number of instruction 'executions' that can occur before a simulation is ended. The default maximum number of instruction executions is one thousand.
+
+Specify a 'max_instrs' count of -1, if no max value is desired. 
+
+The 'max_instrs' option is useful when debugging code where the possibility of a simulation 'running away', ie, getting stuck in a loop of some sort, could occur.
+
+Port, core
+----------
+The 'a64sim' simulator can run in 'debug' mode, where the simulator operates as a 'debug server'. The '--port' argument specifies which 'TCP' port the simulator  will communication over. For a simulation involving multiple cores, the '--core' argument indicates which processor under test to attach to.
+
+The a64sim simulator, when operating as a debug server, supports the gdb 'Remote Server Protocol', and can therefore be used with a gdb client configured for the ARM64 processor. See the 'a64 debug server' users guide for more information.
+
+Freerun
+-------
+The '--freerun' command line argument may be used to enable the 'a64sim' simulator 'freerun' operating mode. In this mode, during simulation whenever uninitialized instruction memory is encountered, the simulator will choose an instruction type to be simulated, build a randomized instruction opcode for that instruction, write the opcode into memory at the current PC, and then simulate the result.
+
+Use the '--seed' command line argument to specify the initial random seed value to use when the _Freerun_ mode is enabled.
+
+This feature was implemented in the early stages of the a64sim simulator implemtation, in order to test the simulator. Your results may vary. Putting this
+another way, tests created using this option may or may not simulate successfully on an actual A64 implementation.
+
+Show disassembly
+----------------
+The '--show_disassembly' command option, when present, causes the disassembly for each instruction simulated to be printed to stdout during simulation.
+At this time the assembly language statements produced are not guaranteed to assembly correctly.
+
+_Semihosting_ command line options
+----------------------------------
+At present the a64sim simulator has no emulated hardware support for I/O, such as UARTs or graphics frame buffer or keyboard. For convenience, and of course
+to make simulation interesting, support for the _ARM_ semihosting functionality has been include. Via the _semihosting_ interface, calls are provided to
+read/write characters and strings to stdout and stdin, or from a file. Calls are also provided to get access to command line parameters. There are also
+calls to obtain the time-of-day and other timer related values. The a64sim simulator supported semihosting calls are documented elsewhere. The a64sim
+command line options related to semihosting are described below...
+
+The '--app_cmdline' command line option may be used to specify a command line string to pass along onto a simulated program via the semihosting interface. Put another
+way, when a simulated program calls the semihosting interface to obtain the command line, the '--app_cmdline' argument value is returned. Quote the string of
+course as required to protect embedded blanks or control characters.
+
+The '--app_env' command line option may be used to specify a string containing environment variable definitions, to pass along onto a simulated program via the semihosting interface.
+
+The '--heap_base', '--heap_limit', '--stack_base', '--stack_limit' command line arguments may be used to set stack and heap parameters, again to be passed along
+to a simulated program via the semihosting interface. There are no default values for these parameters.
+
+The '--env_ptr', '--cmdline_ptr' command line arguments may be used to specify where in main memory the buffers containing the environment and command-line are
+located. There are no default values for these parameters.
+
+
+

@@ -1,0 +1,14 @@
+Package: a64sim
+Version: 1.0.4-alpha
+Architecture: amd64
+Maintainer: Tuleta Software <tuletasoftware@gmail.com>
+Installed-Size: 244
+Depends: libc6 (>= 2.23)
+Section: devel
+Priority: optional
+Homepage: http://www.tuletasoftware.com
+Description: ARM64 processor simulator, graphical interface.
+
+
+
+

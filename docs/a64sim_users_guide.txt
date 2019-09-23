@@ -1,0 +1,228 @@
+a64sim
+======
+:Author:    Tuleta Software Co.
+:Email:     <gene@tuletasoftware.com>
+:Date:      10/5/2017
+:Revision:  1.0-alpha
+
+Copyright Notice
+----------------
+Copyright  © 2017 Tuleta Software, Inc.
+
+License to use this software is granted, free of charge, on a individual, non-commercial
+basis only. Individuals are free to download and use the software free of charge, for
+personal educational use only.
+
+Usage, redistribution or deployment of this software for commercial purposes will require
+a commercial license. Licenses are available both for the (existing) binary release, or
+for a (pending) source code release.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL TULETA BE LIABLE FOR ANY CLAIM, DAMAGES
+OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Introduction
+------------
+*a64sim* is a stand-alone _arm64_ microprocessor software simulator. Using the *a64sim*
+simulator, the user may simulate the execution of a single or multi-core _arm64_ processor with attached memory.
+The input to *a64sim* consists of one or more _ELF_ object or _ELF_ binary files.
+The output from *a64sim* may include an _ELF_ file and/or a _simulation trace_.
+
+Command line operation
+----------------------
+From a command line, type 'a64sim -h' or 'a64sim --help' to cause a list of all command line options to be
+printed:
+
+.*a64sim* Help
+----
+gene@gene-MS-7850:$ ./bin/a64sim --help
+A64simulator/MP - Tuleta Software Co. Copyright 2017. All rights reserved.
+
+    command line options:
+        --help (or -h)                          -- print this help message.
+        --version (or -V)                       -- print tool version information.
+
+        --sim_load_file (or -L) <file path>     -- path to simulation source (ELF) file - (default is none)
+        --sim_save_file (or -S) <file path>     -- path to simulation output (ELF) file (default is none)
+
+        --sim_trace_file (or -T) <file path>    -- path to simulation trace file (default is none)
+
+        --num_cores (or -N) <count>             -- number of cores to enable (default is 1)
+        --max_instrs (or -n) <count>            -- Maximum number of instructions per core to simulate (default is 1000)
+
+        --port (or -P) <port>                   -- (TCP) port simulation debug server will listen on
+        --core (or -C) <core>                   -- ID of processor element simulation debug server will attach to
+
+        --freerun (or -F)                       -- Allow simulator to 'freerun' when uninitialized instruction memory encountered
+        --seed (or -S) <unsigned int>           -- initial seed to use when freerun enabled (default is random value)
+
+        --show_disassembly (or -D)              -- Print address/disassembly for each instruction during simulation
+
+        --app_cmdline (or -A)                   -- application cmdline + arguments. May be used by stand-alone C app.
+        --app_env (or -E)                       -- application environment. May be used by stand-alone C app.
+        --heap_base                             -- heap base address      - standalone C apps - semihosting
+        --heap_limit                            -- heap limit             -                "
+        --stack_base                            -- stack base address     -                "
+        --stack_limit                           -- stack limit            -                "
+        --env_ptr                               -- env buffer address     -                "
+        --cmdline_ptr                           -- cmdline buffer address -                "
+gene@gene-MS-7850$ 
+----
+
+Type 'a64sim --version' to view the tool version...
+
+.*a64sim* Version Information
+----
+gene@gene-MS-7850:$ ./bin/a64sim -V
+A64simulator/MP - Tuleta Software Co. Copyright 2017. All rights reserved.
+
+a64sim 1.0 Alpha
+gene@gene-MS-7850:$ 
+----
+
+Simulation load file
+--------------------
+The 'sim_load_file' command line argument may be used to specify the path to an 'ELF' object or 'ELF' binary file to be loaded into the
+simulator. One or more 'ELF' files may be loaded into memory. Each 'ELF' file option must be listed separately along with the '--sim_load_file'
+option.
+
+The 'ELF' file to be loaded must contain one or more '.text' or '.data' sections.
+
+The '.text' sections will include A64 instructions to be copied into main memory. The '.data' sections will include data bytes to be
+copied into main memory.
+
+Although instruction and data bytes are copied from each '.text' or '.data' directly into main memory, it is assumed that each (four byte)
+instruction opcode has been written to memory in 'little endian' memory order.
+
+Instructions and data are copied from the 'ELF' sections into physical memory. There is no support for relocation. Note also that only
+the memory addresses 'covered' by copying instructions and data into memory are initialized.
+
+Simulation save file
+--------------------
+The 'sim_save_file' command line argument may be used to specify the path to an 'ELF' binary file. At the end of simulation, the contents
+of main memory, the 'initial values', will be written to the specified 'ELF' file.
+
+All instructions and initial data values will be written to '.text' (instruction) and '.data' (data) sections, contained in a single 'ELF' segment.
+
+If the default maximum number of 'ELF' file sections that can be contained in a single segment is exceeded, 'extended ELF section numbering' will be employed.
+
+The 'ELF' file written is binary, represents physical memory (contains no relocation information), and no debug symbol information.
+
+Simulation trace file
+---------------------
+The 'sim_trace_file' command line argument may be used to specify the path to a simulation 'trace' file. One an instruction by instruction basis, instruction decode, register and memory updates are recorded. The resulting simulation 'trace' may be loaded and viewed via the 'a64_simtrace_viewer' tool.
+
+When the 'sim_trace_file' option is in play, the entire simulation, ie, all instruction executions for all processing elements (cores) will be recorded. While the trace file format is very compact, simulation run length (the # of instruction executions) versus disk space should be considered. As an example, a one thousand instruction, single core simulation results in a simulation trace file is around 800k bytes. Bump the instruction count to 10k instructions yields a simulation tarce file of around 8meg. 
+
+Core count
+----------
+The '--core' command line argument may be used to specify how many processor cores are to be simulated. The default number of cores is one. The maximum number of cores for this release is limited to 256 (an artificial maximum number established for this release, ie, not a limitation of the simulator).
+
+As in a 'real' chip implementation, each core runs fully independent of the other cores. The simulator uses clock cycles and a ready queue to schedule which cores are ready to run at any point in time. See the 'Simulation Configuration' section for more details on the processor configuration.
+
+All cores share the same processor configuration. For the 1.0 a64sim product release there is a single 4gig physical memory, shared by all cores. The
+'boot address' for all cores is the same, and thus from 'reset' all cores will execure the same code.
+
+Maximum instructions
+--------------------
+The '--max_instrs' command line argument may be used to specify the maximum number of instruction 'executions' that can occur before a simulation is ended. The default maximum number of instruction executions is one thousand.
+
+Specify a 'max_instrs' count of -1, if no max value is desired. 
+
+The 'max_instrs' option is useful when debugging code where the possibility of a simulation 'running away', ie, getting stuck in a loop of some sort, could occur.
+
+Port, core
+----------
+The 'a64sim' simulator can run in 'debug' mode, where the simulator operates as a 'debug server'. The '--port' argument specifies which 'TCP' port the simulator  will communication over. For a simulation involving multiple cores, the '--core' argument indicates which processor under test to attach to.
+
+The a64sim simulator, when operating as a debug server, supports the gdb 'Remote Server Protocol', and can therefore be used with a gdb client configured for the ARM64 processor. See the 'a64 debug server' users guide for more information.
+
+Freerun
+-------
+The '--freerun' command line argument may be used to enable the 'a64sim' simulator 'freerun' operating mode. In this mode, during simulation whenever uninitialized instruction memory is encountered, the simulator will choose an instruction type to be simulated, build a randomized instruction opcode for that instruction, write the opcode into memory at the current PC, and then simulate the result.
+
+This feature was implemented in the early stages of the a64sim simulator implemtation, in order to test the simulator. Your results may vary. Putting this
+another way, tests created using this option may or may not simulate successfully on an actual A64 implementation.
+
+
+
+
+
+
+
+
+
+
+The _a64sim_ *simtrace-viewer* is a graphical viewer that may be used to load and study the _simulation trace_
+produced by *a64sim*.
+
+Requirements
+------------
+The *a64sim* simulator was compiled and linked using gnu g++ version 5.4.0 and Ubuntu Linux version 16.04.4:
+
+.*a64sim* Build Information
+----
+gene@gene-MS-7850:~/Desktop/windvane$ g++ --version
+g++ (Ubuntu 5.4.0-6ubuntu1~16.04.4) 5.4.0 20160609
+Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+gene@gene-MS-7850$ ldd bin/a64sim
+	linux-vdso.so.1 =>  (0x00007ffd21764000)
+	libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f1b877b4000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f1b874ab000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f1b87294000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f1b86ecb000)
+	/lib64/ld-linux-x86-64.so.2 (0x0000564813de8000)
+----
+
+The *simtrace-viewer* requires Java version 1.8 (Java 8 JRE/JDK including FXML):
+
+.*simtrace-viewer* Build Information
+----
+gene@gene-MS-7850$ ${HOME}/Downloads/jdk1.8.0_112/bin/java -version
+java version "1.8.0_112"
+Java(TM) SE Runtime Environment (build 1.8.0_112-b15)
+Java HotSpot(TM) 64-Bit Server VM (build 25.112-b15, mixed mode)
+----
+
+Additionally, to assemble and/or compile the included examples, the _aarch64_ gnu bin tools were installed
+(I used _sudo apt-get install gcc-aarch64-linux-gnu_ to get the precompiled gcc, etc)...
+
+.*aarch* tools used
+----
+gene@gene-MS-7850:$ ls /usr/bin/*aarch*
+/usr/bin/aarch64-linux-gnu-addr2line  /usr/bin/aarch64-linux-gnu-gcc-ar        /usr/bin/aarch64-linux-gnu-ld.bfd
+/usr/bin/aarch64-linux-gnu-ar         /usr/bin/aarch64-linux-gnu-gcc-ar-5      /usr/bin/aarch64-linux-gnu-ld.gold
+/usr/bin/aarch64-linux-gnu-as         /usr/bin/aarch64-linux-gnu-gcc-nm        /usr/bin/aarch64-linux-gnu-nm
+/usr/bin/aarch64-linux-gnu-c++filt    /usr/bin/aarch64-linux-gnu-gcc-nm-5      /usr/bin/aarch64-linux-gnu-objcopy
+/usr/bin/aarch64-linux-gnu-cpp        /usr/bin/aarch64-linux-gnu-gcc-ranlib    /usr/bin/aarch64-linux-gnu-objdump
+/usr/bin/aarch64-linux-gnu-cpp-5      /usr/bin/aarch64-linux-gnu-gcc-ranlib-5  /usr/bin/aarch64-linux-gnu-ranlib
+/usr/bin/aarch64-linux-gnu-dwp        /usr/bin/aarch64-linux-gnu-gcov          /usr/bin/aarch64-linux-gnu-readelf
+/usr/bin/aarch64-linux-gnu-elfedit    /usr/bin/aarch64-linux-gnu-gcov-5        /usr/bin/aarch64-linux-gnu-size
+/usr/bin/aarch64-linux-gnu-g++        /usr/bin/aarch64-linux-gnu-gcov-tool     /usr/bin/aarch64-linux-gnu-strings
+/usr/bin/aarch64-linux-gnu-g++-5      /usr/bin/aarch64-linux-gnu-gcov-tool-5   /usr/bin/aarch64-linux-gnu-strip
+/usr/bin/aarch64-linux-gnu-gcc        /usr/bin/aarch64-linux-gnu-gprof         /usr/bin/qemu-aarch64-static
+/usr/bin/aarch64-linux-gnu-gcc-5      /usr/bin/aarch64-linux-gnu-ld
+
+gene@gene-MS-7850$ /usr/bin/aarch64-linux-gnu-as --version
+GNU assembler (GNU Binutils for Ubuntu) 2.26.1
+Copyright (C) 2015 Free Software Foundation, Inc.
+This program is free software; you may redistribute it under the terms of
+the GNU General Public License version 3 or later.
+This program has absolutely no warranty.
+This assembler was configured for a target of `aarch64-linux-gnu'.
+
+gene@gene-MS-7850$ /usr/bin/aarch64-linux-gnu-g++ --version
+aarch64-linux-gnu-g++ (Ubuntu/Linaro 5.4.0-6ubuntu1~16.04.4) 5.4.0 20160609
+Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+----
+
+
+

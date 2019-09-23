@@ -1,0 +1,47 @@
+#ifndef DISASM_UTILS
+#define DISASM_UTILS
+std::string Tparm(unsigned size,unsigned Q);
+std::string Ta_parm(unsigned size);
+std::string simdElementIndex(unsigned imm5);
+std::string simdElementIndex2(unsigned imm5,unsigned imm4);
+std::string fpElementIndex(unsigned sz,unsigned L,unsigned H);
+std::string simdElementIndex3(unsigned size,unsigned H,unsigned L,unsigned M);
+unsigned int simd_ld1_imm(unsigned Q,unsigned S,unsigned size,int width);
+std::string simd_rshift1(unsigned immh,unsigned immb);
+std::string simd_rshift2(unsigned immh,unsigned immb);
+std::string simd_lshift_scalar(unsigned immh,unsigned immb);
+std::string simd_lshift_vector(unsigned immh,unsigned immb);
+std::string simdLowByteNum(unsigned Q,unsigned imm4);
+std::string Tscale(unsigned imm5);
+std::string Tvect(unsigned imm5,unsigned Q);
+std::string XnSP(unsigned Rn,bool W);
+std::string XnXZR(unsigned Rn,bool W);
+std::string extendOption(unsigned option,unsigned Rd,unsigned Rn,bool has_imm3);
+std::string as_imm_shift(unsigned shift);
+std::string as_reg_shift(unsigned shift);
+std::string eon_reg_shift(unsigned shift);
+unsigned decodeFbits(unsigned immh,unsigned immb,unsigned scale,bool use_scale);
+unsigned decode_pimm(unsigned imm12,unsigned size,unsigned opc);
+std::string Bcond(unsigned cond);
+std::string ZR(unsigned Rm);
+std::string barrier_option(unsigned CRm, bool is_isb);
+std::string ZeroExtend(unsigned imm,unsigned nbits,unsigned shift);
+int HighestSetBit(unsigned bval,int len);
+unsigned Ones(int len);
+unsigned zeroExtend(unsigned tval,int /*nbits*/);
+long long SignExtend(unsigned long long tval,int len);
+std::string systemRegisterName(unsigned o0,unsigned op1,unsigned CRn,unsigned CRm,unsigned op2,bool is_read);
+std::string pstateFieldName(unsigned op1,unsigned op2);
+std::string sysop_name(unsigned op1,unsigned CRn,unsigned CRm,unsigned op2);
+std::string prfop_name(unsigned Rt);
+std::string t_or_sp(unsigned Rt);
+std::string simdScalarWidth(unsigned size);
+std::string simdArrangementB(unsigned size,unsigned Q);
+std::string simdArrangementA(unsigned size);
+unsigned long long FP8exp(unsigned a,unsigned b,unsigned c,unsigned d,unsigned e,unsigned f,unsigned g,unsigned h);
+void ROR_C(unsigned &result, unsigned &carry, unsigned x, int len, int shift);
+unsigned ROR(unsigned x, int len, int shift);
+unsigned Replicate(unsigned x);
+void decodeBitMasks(unsigned &wmask,unsigned &tmask, unsigned immN,unsigned imms,unsigned immr,int nbits,bool immediate);
+//std::string DecodeBitMasks(unsigned immN,unsigned imms,unsigned immr,int len,bool immediate);
+#endif

@@ -1,0 +1,257 @@
+op0 = 0b10
+
+Op1 CRn CRm Op2
+OSDTRRX_EL1       0 0  0 2 RW
+MDCCINT_EL1       0 0  2 0 RW
+MDSCR_EL1         0 0  2 2 RW
+OSDTRTX_EL1       0 0  3 2 RW
+OSECCR_EL1        0 0  6 2 RW
+DBGBVR0_EL1       0 0  0 4 RW
+DBGBVR1_EL1       0 0  1 4 RW
+DBGBVR2_EL1       0 0  2 4 RW
+DBGBVR3_EL1       0 0  3 4 RW
+DBGBVR4_EL1       0 0  4 4 RW
+DBGBVR5_EL1       0 0  5 4 RW
+DBGBVR6_EL1       0 0  6 4 RW
+DBGBVR7_EL1       0 0  7 4 RW
+DBGBVR8_EL1       0 0  8 4 RW
+DBGBVR9_EL1       0 0  9 4 RW
+DBGBVR10_EL1      0 0 10 4 RW
+DBGBVR11_EL1      0 0 11 4 RW
+DBGBVR12_EL1      0 0 12 4 RW
+DBGBVR13_EL1      0 0 13 4 RW
+DBGBVR14_EL1      0 0 14 4 RW
+DBGBVR15_EL1      0 0 15 4 RW
+DBGBCR0_EL1       0 0  0 5 RW
+DBGBCR1_EL1       0 0  1 5 RW
+DBGBCR2_EL1       0 0  2 5 RW
+DBGBCR3_EL1       0 0  3 5 RW
+DBGBCR4_EL1       0 0  4 5 RW
+DBGBCR5_EL1       0 0  5 5 RW
+DBGBCR6_EL1       0 0  6 5 RW
+DBGBCR7_EL1       0 0  7 5 RW
+DBGBCR8_EL1       0 0  8 5 RW
+DBGBCR9_EL1       0 0  9 5 RW
+DBGBCR10_EL1      0 0 10 5 RW
+DBGBCR11_EL1      0 0 11 5 RW
+DBGBCR12_EL1      0 0 12 5 RW
+DBGBCR13_EL1      0 0 13 5 RW
+DBGBCR14_EL1      0 0 14 5 RW
+DBGBCR15_EL1      0 0 15 5 RW
+DBGWVR0_EL1       0 0  0 6 RW
+DBGWVR1_EL1       0 0  1 6 RW
+DBGWVR2_EL1       0 0  2 6 RW
+DBGWVR3_EL1       0 0  3 6 RW
+DBGWVR4_EL1       0 0  4 6 RW
+DBGWVR5_EL1       0 0  5 6 RW
+DBGWVR6_EL1       0 0  6 6 RW
+DBGWVR7_EL1       0 0  7 6 RW
+DBGWVR8_EL1       0 0  8 6 RW
+DBGWVR9_EL1       0 0  9 6 RW
+DBGWVR10_EL1      0 0 10 6 RW
+DBGWVR11_EL1      0 0 11 6 RW
+DBGWVR12_EL1      0 0 12 6 RW
+DBGWVR13_EL1      0 0 13 6 RW
+DBGWVR14_EL1      0 0 14 6 RW
+DBGWVR15_EL1      0 0 15 6 RW
+DBGWCR0_EL1       0 0  0 7 RW
+DBGWCR1_EL1       0 0  1 7 RW
+DBGWCR2_EL1       0 0  2 7 RW
+DBGWCR3_EL1       0 0  3 7 RW
+DBGWCR4_EL1       0 0  4 7 RW
+DBGWCR5_EL1       0 0  5 7 RW
+DBGWCR6_EL1       0 0  6 7 RW
+DBGWCR7_EL1       0 0  7 7 RW
+DBGWCR8_EL1       0 0  8 7 RW
+DBGWCR9_EL1       0 0  9 7 RW
+DBGWCR10_EL1      0 0 10 7 RW
+DBGWCR11_EL1      0 0 11 7 RW
+DBGWCR12_EL1      0 0 12 7 RW
+DBGWCR13_EL1      0 0 13 7 RW
+DBGWCR14_EL1      0 0 14 7 RW
+DBGWCR15_EL1      0 0 15 7 RW
+MDRAR_EL1         0 1  0 0 RO
+OSLAR_EL1         0 1  0 4 WO
+OSLSR_EL1         0 1  1 4 RO
+OSDLR_EL1         0 1  3 4 RW
+DBGPRCR_EL1       0 1  4 4 RW
+DBGCLAIMSET_EL1   0 7  8 6 RW
+DBGCLAIMCLR_EL1   0 7  9 6 RW
+DBGAUTHSTATUS_EL1 0 7 14 6 RO
+MDCCSR_EL0        3 0  1 0 RO
+DBGDTR_EL0        3 0  4 0 RW
+DBGDTRRX_EL0      3 0  5 0 RO
+DBGDTRTX_EL0      3 0  5 0 WO
+DBGVCR32_EL2      4 0  7 0 RW
+
+op0 = 0b11
+
+CRn Op1 CRm Op2
+MIDR_EL1           0 0 0 0 RO.
+MPIDR_EL1[63:0]    0 0 0 5 RO.
+REVIDR_EL1         0 0 0 6 RO.
+ID_PFR0_EL1        0 0 1 0 RO, but RAZ if AArch32 is not implemented.
+ID_PFR1_EL1        0 0 1 1
+ID_DFR0_EL1        0 0 1 2
+ID_AFR0_EL1        0 0 1 3
+ID_MMFR0_EL1       0 0 1 4
+ID_MMFR1_EL1       0 0 1 5
+ID_MMFR2_EL1       0 0 1 6
+ID_MMFR3_EL1       0 0 1 7
+ID_ISAR0_EL1       0 0 2 0 RO, but RAZ if AArch32 is not implemented.
+ID_ISAR1_EL1       0 0 2 1
+ID_ISAR2_EL1       0 0 2 2
+ID_ISAR3_EL1       0 0 2 3
+ID_ISAR4_EL1       0 0 2 4
+ID_ISAR5_EL1       0 0 2 5
+MVFR0_EL1          0 0 3 0 RO.
+MVFR1_EL1          0 0 3 1
+MVFR2_EL1          0 0 3 2 Reserved, RAZ n For n=3-7.
+ID_AA64PFR0_EL1    0 0 4 0 RO.
+ID_AA64PFR1_EL1    0 0 4 1 RO. Reserved, RAZ n For n=2-7.
+ID_AA64DFR0_EL1    0 0 5 0 RO.
+ID_AA64DFR1_EL1    0 0 5 1 RO.
+ID_AA64AFR0_EL1    0 0 5 4 RO.
+ID_AA64AFR1_EL1    0 0 5 5 RO. Reserved, RAZ n For n={2, 3, 6, 7}.
+ID_AA64ISAR0_EL1   0 0 6 0 RO.
+ID_AA64ISAR1_EL1   0 0 6 1 RO. Reserved, RAZ n For n=2-7.
+ID_AA64MMFR0_EL1   0 0 7 0 RO.
+ID_AA64MMFR1_EL1   0 0 7 1 RO. Reserved, RAZ n For n=2-7.
+CCSIDR_EL1         0 1 0 0 RO.
+CLIDR_EL1          0 1 0 1
+AIDR_EL1           0 1 0 7
+CSSELR_EL1         0 2 0 0 RW.
+CTR_EL0            0 3 0 1 RO and configurable to enable access at EL0.
+DCZID_EL0          0 3 0 7 RO.
+VPIDR_EL2[63:0]    0 4 0 0 RW.
+VMPIDR_EL2         0 4 0 5
+SCTLR_EL1          1 0 0 0 RW.
+ACTLR_EL1          1 0 0 1 IMPLEMENTATION DEFINED.
+CPACR_EL1          1 0 0 2 Floating-point and Advanced SIMD only.
+SCTLR_EL2          1 4 0 0
+ACTLR_EL2          1 4 0 1 IMPLEMENTATION DEFINED.
+HCR_EL2[63:0]      1 4 1 0 RW.
+MDCR_EL2           1 4 1 1
+CPTR_EL2           1 4 1 2 Floating-point and Advanced SIMD only.
+HSTR_EL2           1 4 1 3 RW.
+HACR_EL2           1 4 1 7 IMPLEMENTATION DEFINED.
+SCTLR_EL3          1 6 0 0 RW.
+ACTLR_EL3          1 6 0 1 IMPLEMENTATION DEFINED.
+SCR_EL3            1 6 1 0 RW.
+CPTR_EL3           1 6 1 2 Floating-point and Advanced SIMD only.
+MDCR_EL3           1 6 3 1 RW.
+TTBR0_EL1[63:0]    2 0 0 0 RW.
+TTBR1_EL1[63:0]    2 0 0 1
+TCR_EL1[63:0]      2 0 0 2
+TTBR0_EL2[63:0]    2 4 0 0 RW.
+TCR_EL2            2 4 0 2
+VTTBR_EL2[63:0]    2 4 1 0 RW.
+VTCR_EL2           2 4 1 2
+TTBR0_EL3[63:0]    2 6 0 0 RW.
+TCR_EL3            2 6 0 2
+AFSR0_EL1          5 0 1 0 IMPLEMENTATION DEFINED.
+AFSR1_EL1          5 0 1 1
+ESR_EL1            5 0 2 0 RW.
+AFSR0_EL2          5 4 1 0 IMPLEMENTATION DEFINED.
+AFSR1_EL2          5 4 1 1
+ESR_EL2            5 4 2 0 RW.
+AFSR0_EL3          5 6 1 0 IMPLEMENTATION DEFINED.
+AFSR1_EL3          5 6 1 1
+ESR_EL3            5 6 2 0 RW.
+FAR_EL1[63:0]      6 0 0 0 RW.
+FAR_EL2[63:0]      6 4 0 0 RW.
+HPFAR_EL2[63:0]    6 4 0 4
+FAR_EL3[63:0]      6 6 0 0 RW.
+PAR_EL1[63:0]      7 0 4 0 RW.
+PMINTENSET_EL1     9 0 14 1 RW
+PMINTENCLR_EL1     9 0 14 2 RW
+PMCR_EL0           9 3 12 0 Configurable whether accesses at EL0 are permitted.
+PMCNTENSET_EL0     9 3 12 1
+PMCNTENCLR_EL0     9 3 12 2
+PMOVSCLR_EL0       9 3 12 3
+PMSWINC_EL0        9 3 12 4 WO. Configurable whether accesses at EL0 are permitted.
+PMSELR_EL0         9 3 12 5 Configurable whether accesses at EL0 are permitted.
+PMCEID0_EL0        9 3 12 6 RO. Configurable whether accesses at EL0 are permitted.
+PMCEID1_EL0        9 3 12 7
+PMCCNTR_EL0        9 3 13 0 Configurable whether accesses at EL0 are permitted.
+PMXEVTYPER_EL0     9 3 13 1
+PMXEVCNTR_EL0      9 3 13 2
+PMUSERENR_EL0      9 3 14 0 RO at EL0 but can be written at other Exception levels
+PMOVSSET_EL0       9 3 14 3 Configurable whether accesses at EL0 are permitted.
+
+PMEVCNTR<n>_EL0 14 3 {8-10}  {0-7} CRm and op2 encode n, the counter number. Configurable whether accesses at EL0 are permitted.
+                      11     {0-6}
+PMEVTYPER<n>_EL0     {12-14} {0-7}
+                      15     {0-6}
+PMCCFILTR_EL0                 7 Configurable whether accesses at EL0 are permitted.
+
+MAIR_EL1[63:0]  10 0 2 0 RW.
+AMAIR_EL1[63:0] 10 0 3 0 IMPLEMENTATION DEFINED.
+MAIR_EL2[63:0]  10 4 2 0 RW.
+AMAIR_EL2[63:0] 10 4 3 0 IMPLEMENTATION DEFINED.
+MAIR_EL3[63:0]  10 6 2 0 RW.
+AMAIR_EL3[63:0] 10 3 3 0 IMPLEMENTATION DEFINED.
+VBAR_EL1[63:0]  12 0 0 0 RW.
+RVBAR_EL1[63:0] 12 0 0 1 RO. Implemented only if EL2 and EL3 are not implemented.
+RMR_EL1[63:0]   12 0 0 2 Implemented only if both of the following conditions apply:
+   • EL1 is capable of using AArch32 and AArch64
+   • EL2 and EL3 are not implemented.
+ISR_EL1         12 0 1 0 RO.
+VBAR_EL2[63:0]  12 4 0 0 RW.
+RVBAR_EL2[63:0] 12 4 0 1 RO. Implemented only if EL3 is not implemented.
+RMR_EL2[63:0]   12 4 0 2 Implemented only if both of the following conditions apply:
+   • EL2 is capable of using AArch32 and AArch64
+   • EL3 is not implemented.
+VBAR_EL3[63:0]  12 6 0 0 RW.
+RVBAR_EL3[63:0] 12 6 0 1 RO.
+RMR_EL3[63:0]   12 6 0 2 Implemented only if EL3 can use both AArch32 and AArch64.
+CONTEXTIDR_EL1    13 0 0 1 RW.
+TPIDR_EL1[63:0]   13 0 0 4
+TPIDR_EL0[63:0]   13 3 0 2 RW.
+TPIDRRO_EL0[63:0] 13 3 0 3
+TPIDR_EL2[63:0]   13 4 0 2 RW.
+TPIDR_EL3[63:0]   13 6 0 2 RW.
+CNTKCTL_EL1          14 0 1 0 RW.
+CNTFRQ_EL0           14 3 0 0 RO at EL1 but can be written at the highest Exception Level implemented. Configurable to enable access at EL0.
+CNTPCT_EL0[63:0]     14 3 0 1 RO. Configurable whether accesses at EL0 are permitted.
+CNTVCT_EL0[63:0]     14 3 0 2
+CNTP_TVAL_EL0        14 3 2 0 Configurable whether accesses at EL0 are permitted.
+CNTP_CTL_EL0         14 3 2 1
+CNTP_CVAL_EL0[63:0]  14 3 2 2
+CNTV_TVAL_EL0        14 3 3 0 Configurable whether accesses at EL0 are permitted.
+CNTV_CTL_EL0         14 3 3 1
+CNTV_CVAL_EL0[63:0]  14 3 3 2
+CNTHCTL_EL2          14 4 1 0 RW.
+CNTHP_TVAL_EL2       14 4 2 0 RW.
+CNTHP_CTL_EL2        14 4 2 1
+CNTHP_CVAL_EL2[63:0] 14 4 2 2
+CNTPS_TVAL_EL1       14 7 2 0 Accessible at EL3. Configurable whether Secure accesses at EL1 are permitted.
+CNTPS_CTL_EL1        14 7 2 1
+CNTPS_CVAL_EL1[63:0] 14 7 2 2
+SDER32_EL3            1 6 1 1 If EL1 cannot use AArch32, this register is UNDEFINED.
+DACR32_EL2            3 4 0 0 If EL1 cannot use AArch32, this register is UNDEFINED.
+IFSR32_EL2            5 4 0 1 If EL1 cannot use AArch32, this register is UNDEFINED.
+FPEXC32_EL2           5 4 3 0 If EL1 cannot use AArch32, this register is UNDEFINED.
+
+CRn == 4
+SPSR_EL1  0 0 0 Accessible from EL1 or higher.
+ELR_EL1   0 0 1
+SP_EL0    0 1 0 Accessible from EL1 or higher. If SP_EL0 is the current stack pointer then the access is UNDEFINED.
+SPSel     0 2 0 Accessible from EL1 or higher. 
+CurrentEL 2 RO. Accessible from EL1 or higher.
+DAIF      3 2 1 Configurable whether accesses at EL0 are permitted.
+NZCV      3 2 0 Accessible from EL0 or higher.
+FPCR      3 4 0 Accessible from EL0 or higher.
+FPSR      3 4 1
+DSPSR_EL0 3 5 0 Accessible only in Debug state, from EL0 or higher.
+DLR_EL0   3 5 1
+SPSR_EL2  4 0 0 Accessible from EL2 or higher.
+ELR_EL2   4 0 1
+SP_EL1    4 1 0
+SPSR_irq  4 3 0
+SPSR_abt  4 3 1
+SPSR_und  4 3 2
+SPSR_fiq  4 3 3
+SPSR_EL3  6 0 0 Accessible from EL3 or higher.
+ELR_EL3   6 0 1 
+SP_EL2    6 1 0

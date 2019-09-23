@@ -1,0 +1,1272 @@
+#!/usr/bin/perl -w
+
+my $instance_name = '';
+my $instance_number = '';
+my $qualifier = '';
+my $notes = '';
+my $instruction = '';
+my $alias = '';
+my $section = '';
+my $page = '';
+my @dest_operands = ();
+my @src_operands = ();
+my $assembly = '';
+my $printf = '';
+
+my @ignored_aliases = ();
+
+# enum/assembly => enum
+
+my %instance_name_fixes = (
+    'SIMD_ADD_SCALAR_VEC/ADD <Vd>.<T>, <Vn>.<T>, <Vm>.<T>' => 'SIMD_ADD_VEC_VEC',
+
+    'FCVT_SINGLE_FROM_HP/FCVT <Sd>, <Hn>'         => 'FCVT_SINGLE_FROM_HP_TO_SP',
+    'FCVT_FROM_HP/FCVT <Dd>, <Hn>'                => 'FCVT_SINGLE_FROM_HP_TO_DP',
+    'FCVT_SINGLE_FROM_SP/FCVT <Hd>, <Sn>'         => 'FCVT_SINGLE_FROM_SP_TO_HP',
+    'FCVT_SINGLE_FROM_SP/FCVT <Dd>, <Sn>'         => 'FCVT_SINGLE_FROM_SP_TO_DP',
+    'FCVT_FROM_DP/FCVT <Hd>, <Dn>'                => 'FCVT_FROM_DP_TO_HP',
+    'FCVT_SINGLE_FROM_DP/FCVT <Sd>, <Dn>'         => 'FCVT_SINGLE_FROM_DP_TO_SP',
+
+    'FCVTAS_SCALAR_VEC/FCVTAS <V><d>, <V><n>'     => 'SIMD_FCVTAS_REG_SCALAR_VEC',
+    'FCVTAS_SCALAR_VEC/FCVTAS <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTAS_REG_VEC_VEC',
+
+    'FCVTAS_SINGLE_FROM_SP/FCVTAS <Wd>, <Sn>'     => 'FCVTAS_SINGLE_FROM_SP_FP_32',
+    'FCVTAS_SINGLE_FROM_SP/FCVTAS <Xd>, <Sn>'     => 'FCVTAS_SINGLE_FROM_SP_FP_64',
+    'FCVTAS_FROM_DP/FCVTAS <Wd>, <Dn>'            => 'FCVTAS_FROM_DP_FP_32',
+    'FCVTAS_FROM_DP/FCVTAS <Xd>, <Dn>'            => 'FCVTAS_FROM_DP_FP_64',
+
+    'FCVTAU_SCALAR_VEC/FCVTAU <V><d>, <V><n>'     => 'SIMD_FCVTAU_REG_SCALAR_VEC',
+    'FCVTAU_SCALAR_VEC/FCVTAU <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTAU_REG_VEC_VEC',
+
+    'FCVTAU_SINGLE_FROM_SP/FCVTAU <Wd>, <Sn>' => 'FCVTAU_SINGLE_FROM_SP_FP_32',
+    'FCVTAU_SINGLE_FROM_SP/FCVTAU <Xd>, <Sn>' => 'FCVTAU_SINGLE_FROM_SP_FP_64',
+    'FCVTAU_FROM_DP/FCVTAU <Wd>, <Dn>'        => 'FCVTAU_FROM_DP_FP_32',
+    'FCVTAU_FROM_DP/FCVTAU <Xd>, <Dn>'        => 'FCVTAU_FROM_DP_FP_64',
+
+    'FCVTMS_SCALAR_VEC/FCVTMS <V><d>, <V><n>'     => 'SIMD_FCVTMS_REG_SCALAR_VEC',
+    'FCVTMS_SCALAR_VEC/FCVTMS <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTMS_REG_VEC_VEC',
+
+    'FCVTMS_SINGLE_FROM_SP/FCVTMS <Wd>, <Sn>' => 'FCVTMS_SINGLE_FROM_SP_FP_32',
+    'FCVTMS_SINGLE_FROM_SP/FCVTMS <Xd>, <Sn>' => 'FCVTMS_SINGLE_FROM_SP_FP_64',
+    'FCVTMS_FROM_DP/FCVTMS <Wd>, <Dn>'        => 'FCVTMS_FROM_DP_FP_32',
+    'FCVTMS_FROM_DP/FCVTMS <Xd>, <Dn>'        => 'FCVTMS_FROM_DP_FP_64',
+
+    'FCVTMU_SCALAR_VEC/FCVTMU <V><d>, <V><n>'     => 'SIMD_FCVTMU_REG_SCALAR_VEC',
+    'FCVTMU_SCALAR_VEC/FCVTMU <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTMU_REG_VEC_VEC',
+
+    'FCVTMU_SINGLE_FROM_SP/FCVTMU <Wd>, <Sn>' => 'FCVTMU_SINGLE_FROM_SP_FP_32',
+    'FCVTMU_SINGLE_FROM_SP/FCVTMU <Xd>, <Sn>' => 'FCVTMU_SINGLE_FROM_SP_FP_64',
+    'FCVTMU_FROM_DP/FCVTMU <Wd>, <Dn>'        => 'FCVTMU_FROM_DP_FP_32',
+    'FCVTMU_FROM_DP/FCVTMU <Xd>, <Dn>'        => 'FCVTMU_FROM_DP_FP_64',
+
+    'FCVTNS_SCALAR_VEC/FCVTNS <V><d>, <V><n>'     => 'SIMD_FCVTNS_REG_SCALAR_VEC',
+    'FCVTNS_SCALAR_VEC/FCVTNS <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTNS_REG_VEC_VEC',
+
+    'FCVTNS_SINGLE_FROM_SP/FCVTNS <Wd>, <Sn>' => 'FCVTNS_SINGLE_FROM_SP_FP_32',
+    'FCVTNS_SINGLE_FROM_SP/FCVTNS <Xd>, <Sn>' => 'FCVTNS_SINGLE_FROM_SP_FP_64',
+    'FCVTNS_FROM_DP/FCVTNS <Wd>, <Dn>'        => 'FCVTNS_FROM_DP_FP_32',
+    'FCVTNS_FROM_DP/FCVTNS <Xd>, <Dn>'        => 'FCVTNS_FROM_DP_FP_64',
+
+    'FCVTNU_SCALAR_VEC/FCVTNU <V><d>, <V><n>'     => 'SIMD_FCVTNU_REG_SCALAR_VEC',
+    'FCVTNU_SCALAR_VEC/FCVTNU <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTNU_REG_VEC_VEC',
+
+    'FCVTNU_SINGLE_FROM_SP/FCVTNU <Wd>, <Sn>' => 'FCVTNU_SINGLE_FROM_SP_FP_32',
+    'FCVTNU_SINGLE_FROM_SP/FCVTNU <Xd>, <Sn>' => 'FCVTNU_SINGLE_FROM_SP_FP_64',
+    'FCVTNU_FROM_DP/FCVTNU <Wd>, <Dn>'        => 'FCVTNU_FROM_DP_FP_32',
+    'FCVTNU_FROM_DP/FCVTNU <Xd>, <Dn>'        => 'FCVTNU_FROM_DP_FP_64',
+
+    'FCVTPS_SCALAR_VEC/FCVTPS <V><d>, <V><n>'     => 'SIMD_FCVTPS_REG_SCALAR_VEC',
+    'FCVTPS_SCALAR_VEC/FCVTPS <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTPS_REG_VEC_VEC',
+
+    'FCVTPS_SINGLE_FROM_SP/FCVTPS <Wd>, <Sn>' => 'FCVTPS_SINGLE_FROM_SP_FP_32',
+    'FCVTPS_SINGLE_FROM_SP/FCVTPS <Xd>, <Sn>' => 'FCVTPS_SINGLE_FROM_SP_FP_64',
+    'FCVTPS_FROM_DP/FCVTPS <Wd>, <Dn>'        => 'FCVTPS_FROM_DP_FP_32',
+    'FCVTPS_FROM_DP/FCVTPS <Xd>, <Dn>'        => 'FCVTPS_FROM_DP_FP_64',
+
+    'FCVTPU_SCALAR_VEC/FCVTPU <V><d>, <V><n>'     => 'SIMD_FCVTPU_REG_SCALAR_VEC',
+    'FCVTPU_SCALAR_VEC/FCVTPU <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTPU_REG_VEC_VEC',
+
+    'FCVTPU_SINGLE_FROM_SP/FCVTPU <Wd>, <Sn>' => 'FCVTPU_SINGLE_FROM_SP_FP_32',
+    'FCVTPU_SINGLE_FROM_SP/FCVTPU <Xd>, <Sn>' => 'FCVTPU_SINGLE_FROM_SP_FP_64',
+    'FCVTPU_FROM_DP/FCVTPU <Wd>, <Dn>'        => 'FCVTPU_FROM_DP_FP_32',
+    'FCVTPU_FROM_DP/FCVTPU <Xd>, <Dn>'        => 'FCVTPU_FROM_DP_FP_64',
+
+    'FCVTZS_SCALAR_VEC_FIXED/FCVTZS <V><d>, <V><n>, #<fbits>'     => 'SIMD_FCVTZS_SHIFT_IMM_SCALAR_VEC_FIXED',
+    'FCVTZS_SCALAR_VEC_FIXED/FCVTZS <Vd>.<T>, <Vn>.<T>, #<fbits>' => 'SIMD_FCVTZS_SHIFT_IMM_VEC_VEC_FIXED',
+
+    'FCVTZS_SCALAR_VEC/FCVTZS <V><d>, <V><n>'     => 'SIMD_FCVTZS_REG_SCALAR_VEC',
+    'FCVTZS_SCALAR_VEC/FCVTZS <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTZS_REG_VEC_VEC',
+
+    'FCVTZS_SINGLE_FROM_SP_FIXED/FCVTZS <Wd>, <Sn>, #<fbits>' => 'FCVTZS_SINGLE_FROM_SP_FP_FIXED_32',
+    'FCVTZS_SINGLE_FROM_SP_FIXED/FCVTZS <Xd>, <Sn>, #<fbits>' => 'FCVTZS_SINGLE_FROM_SP_FP_FIXED_64',
+    'FCVTZS_FROM_DP_FIXED/FCVTZS <Wd>, <Dn>, #<fbits>'        => 'FCVTZS_FROM_DP_FP_FIXED_32',
+    'FCVTZS_FROM_DP_FIXED/FCVTZS <Xd>, <Dn>, #<fbits>'        => 'FCVTZS_FROM_DP_FP_FIXED_64',
+
+    'FCVTZS_SINGLE_FROM_SP/FCVTZS <Wd>, <Sn>' => 'FCVTZS_SINGLE_FROM_SP_FP_32',
+    'FCVTZS_SINGLE_FROM_SP/FCVTZS <Xd>, <Sn>' => 'FCVTZS_SINGLE_FROM_SP_FP_64',
+    'FCVTZS_FROM_DP/FCVTZS <Wd>, <Dn>'        => 'FCVTZS_FROM_DP_FP_32',
+    'FCVTZS_FROM_DP/FCVTZS <Xd>, <Dn>'        => 'FCVTZS_FROM_DP_FP_64',
+
+    'FCVTZU_SCALAR_VEC_FIXED/FCVTZU <V><d>, <V><n>, #<fbits>'     => 'SIMD_FCVTZU_SHIFT_IMM_SCALAR_VEC_FIXED',
+    'FCVTZU_SCALAR_VEC_FIXED/FCVTZU <Vd>.<T>, <Vn>.<T>, #<fbits>' => 'SIMD_FCVTZU_SHIFT_IMM_VEC_VEC_FIXED',
+
+    'FCVTZU_SCALAR_VEC/FCVTZU <V><d>, <V><n>'     => 'SIMD_FCVTZU_REG_SCALAR_VEC',
+    'FCVTZU_SCALAR_VEC/FCVTZU <Vd>.<T>, <Vn>.<T>' => 'SIMD_FCVTZU_REG_VEC_VEC',
+
+    'FCVTZU_SINGLE_FROM_SP_FIXED/FCVTZU <Wd>, <Sn>, #<fbits>' => 'FCVTZU_SINGLE_FROM_SP_FP_FIXED_32',
+    'FCVTZU_SINGLE_FROM_SP_FIXED/FCVTZU <Xd>, <Sn>, #<fbits>' => 'FCVTZU_SINGLE_FROM_SP_FP_FIXED_64',
+    'FCVTZU_FROM_DP_FIXED/FCVTZU <Wd>, <Dn>, #<fbits>'        => 'FCVTZU_FROM_DP_FP_FIXED_32',
+    'FCVTZU_FROM_DP_FIXED/FCVTZU <Xd>, <Dn>, #<fbits>'        => 'FCVTZU_FROM_DP_FP_FIXED_64',
+
+    'FCVTZU_SINGLE_FROM_SP/FCVTZU <Wd>, <Sn>' => 'FCVTZU_SINGLE_FROM_SP_FP_32',
+    'FCVTZU_SINGLE_FROM_SP/FCVTZU <Xd>, <Sn>' => 'FCVTZU_SINGLE_FROM_SP_FP_64',
+    'FCVTZU_FROM_DP/FCVTZU <Wd>, <Dn>'        => 'FCVTZU_FROM_DP_FP_32',
+    'FCVTZU_FROM_DP/FCVTZU <Xd>, <Dn>'        => 'FCVTZU_FROM_DP_FP_64',
+
+    'FMOV_IMM_SINGLE_VEC_FROM_SP/FMOV <Vd>.<T>, #<imm>' => 'SIMD_FMOV_IMM_MOD_SINGLE_VEC_FROM_SP',
+    'FMOV_IMM_VEC_FROM_DP/FMOV <Vd>.2D, #<imm>'         => 'SIMD_FMOV_IMM_MOD_VEC_FROM_DP',
+    'FMOV_SINGLE_REG_FROM_SP/FMOV <Sd>, <Sn>'           => 'FMOV_SINGLE_REG_FROM_SP',
+    'FMOV_REG_FROM_DP/FMOV <Dd>, <Dn>'                  => 'FMOV_REG_FROM_DP',
+    'FMOV_SINGLE/FMOV <Sd>, <Wn>'                       => 'FMOV_SINGLE_TO_SP_FP_32',
+    'FMOV_SINGLE_FROM_SP/FMOV <Wd>, <Sn>'               => 'FMOV_SINGLE_FROM_SP_FP_32',
+    'FMOV/FMOV <Dd>, <Xn>'                              => 'FMOV_TO_DP_FP_64',
+    'FMOV/FMOV <Vd>.D[1], <Xn>'                         => 'FMOV_FP_8_64_128_TO_TOP',
+    'FMOV_FROM_DP/FMOV <Xd>, <Dn>'                      => 'FMOV_FROM_DP_FP_64',
+    'FMOV/FMOV <Xd>, <Vn>.D[1]'                         => 'FMOV_FP_8_64_128',
+    'FMOV_IMM_SINGLE_FROM_SP/FMOV <Sd>, #<imm>'         => 'FMOV_IMM_SINGLE_FROM_SP',
+    'FMOV_IMM_FROM_DP/FMOV <Dd>, #<imm>'                => 'FMOV_IMM_FROM_DP',
+
+    'SIMD_NEG_SCALAR_VEC/NEG <V><d>, <V><n>'     => 'SIMD_NEG_REG_SCALAR_VEC',
+    'SIMD_NEG_SCALAR_VEC/NEG <Vd>.<T>, <Vn>.<T>' => 'SIMD_NEG_REG_VEC_VEC',
+
+    'SIMD_SCVTF_SCALAR_VEC_FIXED/SCVTF <V><d>, <V><n>, #<fbits>'     => 'SIMD_SCVTF_SHIFT_IMM_SCALAR_VEC_FIXED',
+    'SIMD_SCVTF_SCALAR_VEC_FIXED/SCVTF <Vd>.<T>, <Vn>.<T>, #<fbits>' => 'SIMD_SCVTF_SHIFT_IMM_VEC_VEC_FIXED',
+
+    'SIMD_SCVTF_SCALAR_VEC/SCVTF <V><d>, <V><n>'     => 'SIMD_SCVTF_REG_SCALAR_VEC',
+    'SIMD_SCVTF_SCALAR_VEC/SCVTF <Vd>.<T>, <Vn>.<T>' => 'SIMD_SCVTF_REG_VEC_VEC',
+
+    'SIMD_SUB_SCALAR_VEC/SUB <V><d>, <V><n>, <V><m>'       => 'SIMD_SUB_SCALAR_VEC',
+    'SIMD_SUB_SCALAR_VEC/SUB <Vd>.<T>, <Vn>.<T>, <Vm>.<T>' => 'SIMD_SUB_VEC_VEC',
+
+    'SIMD_SQRDMULH_SCALAR_ELEM/SQRDMULH <V><d>, <V><n>, <Vm>.<Ts>[<index>]'         => 'SIMD_SQRDMULH_SCALAR_ELEM',
+    'SIMD_SQRDMULH_SCALAR_VEC_ELEM/SQRDMULH <Vd>.<T>, <Vn>.<T>, <Vm>.<Ts>[<index>]' => 'SIMD_SQRDMULH_VEC_VEC_ELEM',
+    'SIMD_SQRDMULH_SCALAR_VEC/SQRDMULH <V><d>, <V><n>, <V><m>'                      => 'SIMD_SQRDMULH_SCALAR_VEC',
+    'SIMD_SQRDMULH_SCALAR_VEC/SQRDMULH <Vd>.<T>, <Vn>.<T>, <Vm>.<T>'                => 'SIMD_SQRDMULH_VEC_VEC',
+
+    'SIMD_SQDMLAL_SCALAR_VEC/SQDMLAL <Va><d>, <Vb><n>, <Vb><m>'        => 'SIMD_SQDMLAL_SCALAR_VEC',
+    'SIMD_SQDMLAL_SCALAR_VEC/SQDMLAL <Vd>.<Ta>, <Vn>.<Tb>, <Vm>.<Tb>'  => 'SIMD_SQDMLAL_VEC_VEC',
+    'SIMD_SQDMLAL_SCALAR_VEC/SQDMLAL2 <Vd>.<Ta>, <Vn>.<Tb>, <Vm>.<Tb>' => 'SIMD_SQDMLAL_VEC_VEC',
+
+    'SIMD_SCVTF_SINGLE_FIXED/SCVTF <Sd>, <Wn>, #<fbits>'   => 'SCVTF_SINGLE_TO_SP_FP_FIXED_32',
+    'SIMD_SCVTF_FIXED/SCVTF <Dd>, <Wn>, #<fbits>'          => 'SCVTF_TO_DP_FP_FIXED_32',
+    'SIMD_SCVTF_SINGLE_FIXED/SCVTF <Sd>, <Xn>, #<fbits>'   => 'SCVTF_SINGLE_TO_SP_FP_FIXED_64',
+    'SIMD_SCVTF_FIXED/SCVTF <Dd>, <Xn>, #<fbits>'          => 'SCVTF_TO_DP_FP_FIXED_64',
+
+    'SIMD_SCVTF_SINGLE/SCVTF <Sd>, <Wn>' => 'SCVTF_SINGLE_TO_SP_FP_32',
+    'SIMD_SCVTF/SCVTF <Dd>, <Wn>'        => 'SCVTF_TO_DP_FP_32',
+    'SIMD_SCVTF_SINGLE/SCVTF <Sd>, <Xn>' => 'SCVTF_SINGLE_TO_SP_FP_64',
+    'SIMD_SCVTF/SCVTF <Dd>, <Xn>'        => 'SCVTF_TO_DP_FP_64',
+
+    'SIMD_SQDMULH_SCALAR_VEC/SQDMULH <Vd>.<T>, <Vn>.<T>, <Vm>.<T>' => 'SIMD_SQDMULH_VEC_VEC',
+
+    'SIMD_SQDMULL_SCALAR_VEC/SQDMULL <Vd>.<Ta>, <Vn>.<Tb>, <Vm>.<Tb>'  => 'SIMD_SQDMULL_VEC_VEC',
+    'SIMD_SQDMULL_SCALAR_VEC/SQDMULL2 <Vd>.<Ta>, <Vn>.<Tb>, <Vm>.<Tb>' => 'SIMD_SQDMULL_VEC_VEC',
+
+    'SIMD_UCVTF_SCALAR_VEC_FIXED/UCVTF <Vd>.<T>, <Vn>.<T>, #<fbits>' => 'SIMD_UCVTF_SHIFT_IMM_VEC_VEC_FIXED',
+
+    'SIMD_UCVTF_SCALAR_VEC/UCVTF <Vd>.<T>, <Vn>.<T>' => 'SIMD_UCVTF_REG_VEC_VEC',
+
+    'SIMD_UCVTF_SINGLE_FIXED/UCVTF <Sd>, <Wn>, #<fbits>' => 'UCVTF_SINGLE_TO_SP_FP_FIXED_32',
+    'SIMD_UCVTF_FIXED/UCVTF <Dd>, <Wn>, #<fbits>'        => 'UCVTF_TO_DP_FP_FIXED_32',
+    'SIMD_UCVTF_SINGLE_FIXED/UCVTF <Sd>, <Xn>, #<fbits>' => 'UCVTF_SINGLE_TO_SP_FP_FIXED_64',
+    'SIMD_UCVTF_FIXED/UCVTF <Dd>, <Xn>, #<fbits>'        => 'UCVTF_TO_DP_FP_FIXED_64',
+
+    'SIMD_UCVTF_SINGLE/UCVTF <Sd>, <Wn>' => 'UCVTF_SINGLE_TO_SP_FP_32',
+    'SIMD_UCVTF/UCVTF <Dd>, <Wn>'        => 'UCVTF_TO_DP_FP_32',
+    'SIMD_UCVTF_SINGLE/UCVTF <Sd>, <Xn>' => 'UCVTF_SINGLE_TO_SP_FP_64',
+    'SIMD_UCVTF/UCVTF <Dd>, <Xn>'        => 'UCVTF_TO_DP_FP_64',
+
+    'LD1R/LD1R { <Vt>.<T> }, [<Xn|SP>]'        => 'SIMD_LD1R_OFF_SINGLE_STRUCT',
+    'LD1R/LD1R { <Vt>.<T> }, [<Xn|SP>], <Xm>'  => 'SIMD_LD1R_REG_OFF_SINGLE_POST_STRUCT',
+    'LD1R/LD1R { <Vt>.<T> }, [<Xn|SP>], <imm>' => 'SIMD_LD1R_OFF_SINGLE_POST_STRUCT',
+
+    'LD2R/LD2R { <Vt>.<T>, <Vt2>.<T> }, [<Xn|SP>]'        => 'SIMD_LD2R_OFF_SINGLE_STRUCT',
+    'LD2R/LD2R { <Vt>.<T>, <Vt2>.<T> }, [<Xn|SP>], <Xm>'  => 'SIMD_LD2R_REG_OFF_SINGLE_POST_STRUCT',
+    'LD2R/LD2R { <Vt>.<T>, <Vt2>.<T> }, [<Xn|SP>], <imm>' => 'SIMD_LD2R_OFF_SINGLE_POST_STRUCT',
+
+    'LD3R/LD3R { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T> }, [<Xn|SP>]'        => 'SIMD_LD3R_OFF_SINGLE_STRUCT',
+    'LD3R/LD3R { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T> }, [<Xn|SP>], <Xm>'  => 'SIMD_LD3R_REG_OFF_SINGLE_POST_STRUCT',
+    'LD3R/LD3R { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T> }, [<Xn|SP>], <imm>' => 'SIMD_LD3R_OFF_SINGLE_POST_STRUCT',
+
+    'LD4R/LD4R { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T>, <Vt4>.<T> }, [<Xn|SP>]'        => 'SIMD_LD4R_OFF_SINGLE_STRUCT',
+    'LD4R/LD4R { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T>, <Vt4>.<T> }, [<Xn|SP>], <Xm>'  => 'SIMD_LD4R_REG_OFF_SINGLE_POST_STRUCT',
+    'LD4R/LD4R { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T>, <Vt4>.<T> }, [<Xn|SP>], <imm>' => 'SIMD_LD4R_OFF_SINGLE_POST_STRUCT',
+
+    'LD4_SINGLE_STRUCT_64/LD4 { <Vt>.D, <Vt2>.D, <Vt3>.D, <Vt4>.D }[<index>], [<Xn|SP>], <Xm>' => 'SIMD_LD4_REG_OFF_SINGLE_POST_STRUCT_64',
+
+    'SIMD_LDR_IMM_8/LDR <Bt>, [<Xn|SP>, #<simm>]!'  => 'SIMD_LDR_IMM_REG_PRE_8',
+    'SIMD_LDR_IMM_8/LDR <Bt>, [<Xn|SP>], #<simm>'   => 'SIMD_LDR_IMM_REG_POST_8',
+    'SIMD_LDR_IMM_8/LDR <Bt>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_LDR_IMM_REG_8',
+
+    'SIMD_LDR_IMM_16/LDR <Ht>, [<Xn|SP>, #<simm>]!'  => 'SIMD_LDR_IMM_REG_PRE_16',
+    'SIMD_LDR_IMM_16/LDR <Ht>, [<Xn|SP>], #<simm>'   => 'SIMD_LDR_IMM_REG_POST_16',
+    'SIMD_LDR_IMM_16/LDR <Ht>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_LDR_IMM_REG_16',
+
+    'SIMD_LDR_IMM_32/LDR <St>, [<Xn|SP>, #<simm>]!'  => 'SIMD_LDR_IMM_REG_PRE_32',
+    'SIMD_LDR_IMM_32/LDR <St>, [<Xn|SP>], #<simm>'   => 'SIMD_LDR_IMM_REG_POST_32',
+    'SIMD_LDR_IMM_32/LDR <St>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_LDR_IMM_REG_32',
+
+    'SIMD_LDR_IMM_64/LDR <Dt>, [<Xn|SP>, #<simm>]!'  => 'SIMD_LDR_IMM_REG_PRE_64',
+    'SIMD_LDR_IMM_64/LDR <Dt>, [<Xn|SP>], #<simm>'   => 'SIMD_LDR_IMM_REG_POST_64',
+    'SIMD_LDR_IMM_64/LDR <Dt>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_LDR_IMM_REG_64',
+
+    'SIMD_LDR_IMM_128/LDR <Qt>, [<Xn|SP>, #<simm>]!'  => 'SIMD_LDR_IMM_REG_PRE_8_128',
+    'SIMD_LDR_IMM_128/LDR <Qt>, [<Xn|SP>], #<simm>'   => 'SIMD_LDR_IMM_REG_POST_8_128',
+    'SIMD_LDR_IMM_128/LDR <Qt>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_LDR_IMM_REG_128',
+
+
+    'SIMD_STR_IMM_8/STR <Bt>, [<Xn|SP>, #<simm>]!'  => 'SIMD_STR_IMM_REG_PRE_8',
+    'SIMD_STR_IMM_8/STR <Bt>, [<Xn|SP>], #<simm>'   => 'SIMD_STR_IMM_REG_POST_8',
+    'SIMD_STR_IMM_8/STR <Bt>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_STR_IMM_REG_8',
+
+    'SIMD_STR_IMM_16/STR <Ht>, [<Xn|SP>, #<simm>]!'  => 'SIMD_STR_IMM_REG_PRE_16',
+    'SIMD_STR_IMM_16/STR <Ht>, [<Xn|SP>], #<simm>'   => 'SIMD_STR_IMM_REG_POST_16',
+    'SIMD_STR_IMM_16/STR <Ht>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_STR_IMM_REG_16',
+
+    'SIMD_STR_IMM_32/STR <St>, [<Xn|SP>, #<simm>]!'  => 'SIMD_STR_IMM_REG_PRE_32',
+    'SIMD_STR_IMM_32/STR <St>, [<Xn|SP>], #<simm>'   => 'SIMD_STR_IMM_REG_POST_32',
+    'SIMD_STR_IMM_32/STR <St>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_STR_IMM_REG_32',
+
+    'SIMD_STR_IMM_64/STR <Dt>, [<Xn|SP>, #<simm>]!'  => 'SIMD_STR_IMM_REG_PRE_64',
+    'SIMD_STR_IMM_64/STR <Dt>, [<Xn|SP>], #<simm>'   => 'SIMD_STR_IMM_REG_POST_64',
+    'SIMD_STR_IMM_64/STR <Dt>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_STR_IMM_REG_64',
+
+    'SIMD_STR_IMM_128/STR <Qt>, [<Xn|SP>, #<simm>]!'  => 'SIMD_STR_IMM_REG_PRE_8_128',
+    'SIMD_STR_IMM_128/STR <Qt>, [<Xn|SP>], #<simm>'   => 'SIMD_STR_IMM_REG_POST_8_128',
+    'SIMD_STR_IMM_128/STR <Qt>, [<Xn|SP>{, #<pimm>}]' => 'SIMD_STR_IMM_REG_128',
+
+);
+
+
+# instance-name/qualifier -> instance-name
+
+my %instance_name_fixes_qualified = (
+    'LD1_SINGLE_STRUCT_8/opcode = 000'                                 => 'SIMD_LD1_SINGLE_STRUCT_8',
+    'LD1_SINGLE_STRUCT_64/opcode = 100, S = 0, size = 01'              => 'SIMD_LD1_SINGLE_STRUCT_64',
+    'LD1_SINGLE_STRUCT_16/opcode = 010, size = x0'                     => 'SIMD_LD1_SINGLE_STRUCT_16',
+    'LD1_SINGLE_STRUCT_32/opcode = 100, size = 00'                     => 'SIMD_LD1_SINGLE_STRUCT_32',
+    'LD1_SINGLE_STRUCT_8/Rm = 11111, opcode = 000'                     => 'SIMD_LD1_IMM_OFF_SINGLE_POST_STRUCT_8',
+    'LD1_SINGLE_STRUCT_8/Rm != 11111, opcode = 000'                    => 'SIMD_LD1_REG_OFF_SINGLE_POST_STRUCT_8',
+    'LD1_SINGLE_STRUCT_64/Rm = 11111, opcode = 100, S = 0, size = 01'  => 'SIMD_LD1_IMM_OFF_SINGLE_POST_STRUCT_64',
+    'LD1_SINGLE_STRUCT_64/Rm != 11111, opcode = 100, S = 0, size = 01' => 'SIMD_LD1_REG_OFF_SINGLE_POST_STRUCT_64',
+    'LD1_SINGLE_STRUCT_16/Rm = 11111, opcode = 010, size = x0'         => 'SIMD_LD1_IMM_OFF_SINGLE_POST_STRUCT_16',
+    'LD1_SINGLE_STRUCT_16/Rm != 11111, opcode = 010, size = x0'        => 'SIMD_LD1_REG_OFF_SINGLE_POST_STRUCT_16',
+    'LD1_SINGLE_STRUCT_32/Rm = 11111, opcode = 100, size = 00'         => 'SIMD_LD1_IMM_OFF_SINGLE_POST_STRUCT_32',
+    'LD1_SINGLE_STRUCT_32/Rm != 11111, opcode = 100, size = 00'        => 'SIMD_LD1_REG_OFF_SINGLE_POST_STRUCT_32',
+
+    'LD2_SINGLE_STRUCT_8/opcode = 000'                                 => 'SIMD_LD2_SINGLE_STRUCT_8',
+    'LD2_SINGLE_STRUCT_16/opcode = 010, size = x0'                     => 'SIMD_LD2_SINGLE_STRUCT_16',
+    'LD2_SINGLE_STRUCT_32/opcode = 100, size = 00'                     => 'SIMD_LD2_SINGLE_STRUCT_32',
+    'LD2_SINGLE_STRUCT_64/opcode = 100, S = 0, size = 01'              => 'SIMD_LD2_SINGLE_STRUCT_64',
+    'LD2_SINGLE_STRUCT_8/Rm = 11111, opcode = 000'                     => 'SIMD_LD2_IMM_OFF_SINGLE_POST_STRUCT_8',
+    'LD2_SINGLE_STRUCT_8/Rm != 11111, opcode = 000'                    => 'SIMD_LD2_REG_OFF_SINGLE_POST_STRUCT_8',
+    'LD2_SINGLE_STRUCT_16/Rm = 11111, opcode = 010, size = x0'         => 'SIMD_LD2_IMM_OFF_SINGLE_POST_STRUCT_16',
+    'LD2_SINGLE_STRUCT_16/Rm != 11111, opcode = 010, size = x0'        => 'SIMD_LD2_REG_OFF_SINGLE_POST_STRUCT_16',
+    'LD2_SINGLE_STRUCT_32/Rm = 11111, opcode = 100, size = 00'         => 'SIMD_LD2_IMM_OFF_SINGLE_POST_STRUCT_32',
+    'LD2_SINGLE_STRUCT_32/Rm != 11111, opcode = 100, size = 00'        => 'SIMD_LD2_REG_OFF_SINGLE_POST_STRUCT_32',
+    'LD2_SINGLE_STRUCT_64/Rm = 11111, opcode = 100, S = 0, size = 01'  => 'SIMD_LD2_IMM_OFF_SINGLE_POST_STRUCT_64',
+    'LD2_SINGLE_STRUCT_64/Rm != 11111, opcode = 100, S = 0, size = 01' => 'SIMD_LD2_REG_OFF_SINGLE_POST_STRUCT_64',
+
+    'LD3_SINGLE_STRUCT_8/opcode = 001'                                  => 'SIMD_LD3_SINGLE_STRUCT_8',
+    'LD3_SINGLE_STRUCT_16/opcode = 011, size = x0'                      => 'SIMD_LD3_SINGLE_STRUCT_16',
+    'LD3_SINGLE_STRUCT_32/opcode = 101, size = 00'                      => 'SIMD_LD3_SINGLE_STRUCT_32',
+    'LD3_SINGLE_STRUCT_64/opcode = 101, S = 0, size = 01'               => 'SIMD_LD3_SINGLE_STRUCT_64',
+    'LD3_SINGLE_STRUCT_8/Rm = 11111, opcode = 001'                      => 'SIMD_LD3_IMM_OFF_SINGLE_POST_STRUCT_8',
+    'LD3_SINGLE_STRUCT_8/Rm != 11111, opcode = 001'                     => 'SIMD_LD3_REG_OFF_SINGLE_POST_STRUCT_8',
+    'LD3_SINGLE_STRUCT_16/Rm = 11111, opcode = 011, size = x0'          => 'SIMD_LD3_IMM_OFF_SINGLE_POST_STRUCT_16',
+    'LD3_SINGLE_STRUCT_16/Rm != 11111, opcode = 011, size = x0'         => 'SIMD_LD3_REG_OFF_SINGLE_POST_STRUCT_16',
+    'LD3_SINGLE_STRUCT_32/Rm = 11111, opcode = 101, size = 00'          => 'SIMD_LD3_IMM_OFF_SINGLE_POST_STRUCT_32',
+    'LD3_SINGLE_STRUCT_32/Rm != 11111, opcode = 101, size = 00'         => 'SIMD_LD3_REG_OFF_SINGLE_POST_STRUCT_32',
+    'LD3_SINGLE_STRUCT_64/Rm = 11111, opcode = 101, S = 0, size = 01'   => 'SIMD_LD3_IMM_OFF_SINGLE_POST_STRUCT_64',
+    'LD3_SINGLE_STRUCT_64/Rm != 11111, opcode = 101, S = 0, size = 01'  => 'SIMD_LD3_REG_OFF_SINGLE_POST_STRUCT_64',
+
+    'LD4_SINGLE_STRUCT_8/opcode = 001'                                  => 'SIMD_LD4_SINGLE_STRUCT_8',
+    'LD4_SINGLE_STRUCT_16/opcode = 011, size = x0'                      => 'SIMD_LD4_SINGLE_STRUCT_16',
+    'LD4_SINGLE_STRUCT_32/opcode = 101, size = 00'                      => 'SIMD_LD4_SINGLE_STRUCT_32',
+    'LD4_SINGLE_STRUCT_64/opcode = 101, S = 0, size = 01'               => 'SIMD_LD4_SINGLE_STRUCT_64',
+    'LD4_SINGLE_STRUCT_8/Rm = 11111, opcode = 001'                      => 'SIMD_LD4_IMM_OFF_SINGLE_POST_STRUCT_8',
+    'LD4_SINGLE_STRUCT_8/Rm != 11111, opcode = 001'                     => 'SIMD_LD4_REG_OFF_SINGLE_POST_STRUCT_8',
+    'LD4_SINGLE_STRUCT_16/Rm = 11111, opcode = 011, size = x0'          => 'SIMD_LD4_IMM_OFF_SINGLE_POST_STRUCT_16',
+    'LD4_SINGLE_STRUCT_16/Rm != 11111, opcode = 011, size = x0'         => 'SIMD_LD4_REG_OFF_SINGLE_POST_STRUCT_16',
+    'LD4_SINGLE_STRUCT_32/Rm = 11111, opcode = 101, size = 00'          => 'SIMD_LD4_IMM_OFF_SINGLE_POST_STRUCT_32',
+    'LD4_SINGLE_STRUCT_32/Rm != 11111, opcode = 101, size = 00'         => 'SIMD_LD4_REG_OFF_SINGLE_POST_STRUCT_32',
+    'LD4_SINGLE_STRUCT_64/Rm = 11111, opcode = 101, S = 0, size = 01'   => 'SIMD_LD4_IMM_OFF_SINGLE_POST_STRUCT_64',
+    'LD4 _SINGLE_STRUCT_64/Rm != 11111, opcode = 101, S = 0, size = 01' => 'SIMD_LD4_REG_OFF_SINGLE_POST_STRUCT_64',
+
+    'ST1_SINGLE_STRUCT_8/opcode = 000'                                   => 'SIMD_ST1_SINGLE_STRUCT_8',
+    'ST1_SINGLE_STRUCT_16/opcode = 010, size = x0'                       => 'SIMD_ST1_SINGLE_STRUCT_16',
+    'ST1_SINGLE_STRUCT_32/opcode = 100, size = 00'                       => 'SIMD_ST1_SINGLE_STRUCT_32',
+    'ST1_SINGLE_STRUCT_64/opcode = 100, S = 0, size = 01'                => 'SIMD_ST1_SINGLE_STRUCT_64',
+    'ST1_SINGLE_STRUCT_8/Rm = 11111, opcode = 000'                       => 'SIMD_ST1_IMM_OFF_SINGLE_POST_STRUCT_8',
+    'ST1_SINGLE_STRUCT_8/Rm != 11111, opcode = 000'                      => 'SIMD_ST1_REG_OFF_SINGLE_POST_STRUCT_8',
+    'ST1_SINGLE_STRUCT_16/Rm = 11111, opcode = 010, size = x0'           => 'SIMD_ST1_IMM_OFF_SINGLE_POST_STRUCT_16',
+    'ST1_SINGLE_STRUCT_16/Rm != 11111, opcode = 010, size = x0'          => 'SIMD_ST1_REG_OFF_SINGLE_POST_STRUCT_16',
+    'ST1_SINGLE_STRUCT_32/Rm = 11111, opcode = 100, size = 00'           => 'SIMD_ST1_IMM_OFF_SINGLE_POST_STRUCT_32',
+    'ST1_SINGLE_STRUCT_32/Rm != 11111, opcode = 100, size = 00'          => 'SIMD_ST1_REG_OFF_SINGLE_POST_STRUCT_32',
+    'ST1_SINGLE_STRUCT_64/Rm = 11111, opcode = 100, S = 0, size = 01'    => 'SIMD_ST1_IMM_OFF_SINGLE_POST_STRUCT_64',
+    'ST1_SINGLE_STRUCT_64/Rm != 11111, opcode = 100, S = 0, size = 01'   => 'SIMD_ST1_REG_OFF_SINGLE_POST_STRUCT_64',
+
+    'ST2_SINGLE_STRUCT_8/opcode = 000'                                  => 'SIMD_ST2_SINGLE_STRUCT_8',
+    'ST2_SINGLE_STRUCT_16/opcode = 010, size = x0'                      => 'SIMD_ST2_SINGLE_STRUCT_16',
+    'ST2_SINGLE_STRUCT_32/opcode = 100, size = 00'                      => 'SIMD_ST2_SINGLE_STRUCT_32',
+    'ST2_SINGLE_STRUCT_64/opcode = 100, S = 0, size = 01'               => 'SIMD_ST2_SINGLE_STRUCT_64',
+    'ST2_SINGLE_STRUCT_8/Rm = 11111, opcode = 000'                      => 'SIMD_ST2_IMM_OFF_SINGLE_POST_STRUCT_8',
+    'ST2_SINGLE_STRUCT_8/Rm != 11111, opcode = 000'                     => 'SIMD_ST2_REG_OFF_SINGLE_POST_STRUCT_8',
+    'ST2_SINGLE_STRUCT_16/Rm = 11111, opcode = 010, size = x0'          => 'SIMD_ST2_IMM_OFF_SINGLE_POST_STRUCT_16',
+    'ST2_SINGLE_STRUCT_16/Rm != 11111, opcode = 010, size = x0'         => 'SIMD_ST2_REG_OFF_SINGLE_POST_STRUCT_16',
+    'ST2_SINGLE_STRUCT_32/Rm = 11111, opcode = 100, size = 00'          => 'SIMD_ST2_IMM_OFF_SINGLE_POST_STRUCT_32',
+    'ST2_SINGLE_STRUCT_32/Rm != 11111, opcode = 100, size = 00'         => 'SIMD_ST2_REG_OFF_SINGLE_POST_STRUCT_32',
+    'ST2_SINGLE_STRUCT_64/Rm = 11111, opcode = 100, S = 0, size = 01'   => 'SIMD_ST2_IMM_OFF_SINGLE_POST_STRUCT_64',
+    'ST2_SINGLE_STRUCT_64/Rm != 11111, opcode = 100, S = 0, size = 01'  => 'SIMD_ST2_REG_OFF_SINGLE_POST_STRUCT_64',
+
+    'ST3_SINGLE_STRUCT_8/opcode = 001'                                  => 'SIMD_ST3_SINGLE_STRUCT_8',
+    'ST3_SINGLE_STRUCT_16/opcode = 011, size = x0'                      => 'SIMD_ST3_SINGLE_STRUCT_16',
+    'ST3_SINGLE_STRUCT_32/opcode = 101, size = 00'                      => 'SIMD_ST3_SINGLE_STRUCT_32',
+    'ST3_SINGLE_STRUCT_64/opcode = 101, S = 0, size = 01'               => 'SIMD_ST3_SINGLE_STRUCT_64',
+    'ST3_SINGLE_STRUCT_8/Rm = 11111, opcode = 001'                      => 'SIMD_ST3_IMM_OFF_SINGLE_POST_STRUCT_8',
+    'ST3_SINGLE_STRUCT_8/Rm != 11111, opcode = 001'                     => 'SIMD_ST3_REG_OFF_SINGLE_POST_STRUCT_8',
+    'ST3_SINGLE_STRUCT_16/Rm = 11111, opcode = 011, size = x0'          => 'SIMD_ST3_IMM_OFF_SINGLE_POST_STRUCT_16',
+    'ST3_SINGLE_STRUCT_16/Rm != 11111, opcode = 011, size = x0'         => 'SIMD_ST3_REG_OFF_SINGLE_POST_STRUCT_16',
+    'ST3_SINGLE_STRUCT_32/Rm = 11111, opcode = 101, size = 00'          => 'SIMD_ST3_IMM_OFF_SINGLE_POST_STRUCT_32',
+    'ST3_SINGLE_STRUCT_32/Rm != 11111, opcode = 101, size = 00'         => 'SIMD_ST3_REG_OFF_SINGLE_POST_STRUCT_32',
+    'ST3_SINGLE_STRUCT_64/Rm = 11111, opcode = 101, S = 0, size = 01'   => 'SIMD_ST3_IMM_OFF_SINGLE_POST_STRUCT_64',
+    'ST3_SINGLE_STRUCT_64/Rm != 11111, opcode = 101, S = 0, size = 01'  => 'SIMD_ST3_REG_OFF_SINGLE_POST_STRUCT_64',
+
+    'ST4_SINGLE_STRUCT_8/opcode = 001'                                  => 'SIMD_ST4_SINGLE_STRUCT_8',
+    'ST4_SINGLE_STRUCT_16/opcode = 011, size = x0'                      => 'SIMD_ST4_SINGLE_STRUCT_16',
+    'ST4_SINGLE_STRUCT_32/opcode = 101, size = 00'                      => 'SIMD_ST4_SINGLE_STRUCT_32',
+    'ST4_SINGLE_STRUCT_64/opcode = 101, S = 0, size = 01'               => 'SIMD_ST4_SINGLE_STRUCT_64',
+    'ST4_SINGLE_STRUCT_8/Rm = 11111, opcode = 001'                      => 'SIMD_ST4_IMM_OFF_SINGLE_POST_STRUCT_8',
+    'ST4_SINGLE_STRUCT_8/Rm != 11111, opcode = 001'                     => 'SIMD_ST4_REG_OFF_SINGLE_POST_STRUCT_8',
+    'ST4_SINGLE_STRUCT_16/Rm = 11111, opcode = 011, size = x0'          => 'SIMD_ST4_IMM_OFF_SINGLE_POST_STRUCT_16',
+    'ST4_SINGLE_STRUCT_16/Rm != 11111, opcode = 011, size = x0'         => 'SIMD_ST4_REG_OFF_SINGLE_POST_STRUCT_16',
+    'ST4_SINGLE_STRUCT_32/Rm = 11111, opcode = 101, size = 00'          => 'SIMD_ST4_IMM_OFF_SINGLE_POST_STRUCT_32',
+    'ST4_SINGLE_STRUCT_32/Rm != 11111, opcode = 101, size = 00'         => 'SIMD_ST4_REG_OFF_SINGLE_POST_STRUCT_32',
+    'ST4_SINGLE_STRUCT_64/Rm = 11111, opcode = 101, S = 0, size = 01'   => 'SIMD_ST4_IMM_OFF_SINGLE_POST_STRUCT_64',
+    'ST4_SINGLE_STRUCT_64/Rm != 11111, opcode = 101, S = 0, size = 01'  => 'SIMD_ST4_REG_OFF_SINGLE_POST_STRUCT_64',
+
+    'SIMD_TBL_IMM_MOD/len = 00' =>  'SIMD_TBL_SINGLE_REG',
+    'SIMD_TBL_IMM_MOD/len = 01' =>  'SIMD_TBL_TWO_REG',
+    'SIMD_TBL_IMM_MOD/len = 10' =>  'SIMD_TBL_THREE_REG',
+    'SIMD_TBL_IMM_MOD/len = 11' =>  'SIMD_TBL_FOUR_REG',
+
+    'SIMD_TBX_IMM_MOD/len = 00' =>  'SIMD_TBX_SINGLE_REG',
+    'SIMD_TBX_IMM_MOD/len = 01' =>  'SIMD_TBX_TWO_REG',
+    'SIMD_TBX_IMM_MOD/len = 10' =>  'SIMD_TBX_THREE_REG',
+    'SIMD_TBX_IMM_MOD/len = 11' =>  'SIMD_TBX_FOUR_REG',
+
+    'SIMD_SQDMLSL_SCALAR_VEC/Q==0'   =>  'SIMD_SQDMLSL_VEC_VEC',
+    'SIMD_SQDMLSL_SCALAR_VEC/Q==1'   =>  'SIMD_SQDMLSL_VEC_VEC',
+
+    'SIMD_LDR_REG_8/size = 00, opc = 01'   => 'SIMD_LDR_REG_OFF_8',
+    'SIMD_LDR_REG_64/size = 11, opc = 01'  => 'SIMD_LDR_REG_OFF_64',
+    'SIMD_LDR_REG_16/size = 01, opc = 01'  => 'SIMD_LDR_REG_OFF_16',
+    'SIMD_LDR_REG_128/size = 00, opc = 11' => 'SIMD_LDR_REG_OFF_8_128',
+    'SIMD_LDR_REG_32/size = 10, opc = 01'  => 'SIMD_LDR_REG_OFF_32',
+
+
+    'SIMD_STR_REG_8/size = 00, opc = 00'   => 'SIMD_STR_REG_OFF_8',
+    'SIMD_STR_REG_64/size = 11, opc = 00'  => 'SIMD_STR_REG_OFF_64',
+    'SIMD_STR_REG_16/size = 01, opc = 00'  => 'SIMD_STR_REG_OFF_16',
+    'SIMD_STR_REG_128/size = 00, opc = 10' => 'SIMD_STR_REG_OFF_8_128',
+    'SIMD_STR_REG_32/size = 10, opc = 00'  => 'SIMD_STR_REG_OFF_32'
+);
+
+my %instruction_names_fixes = (
+     'ADDHN2'  => 'ADDHN',
+     'PMULL2'  => 'PMULL',
+     'RADDHN2' => 'RADDHN',
+     'RSUBHN2' => 'RSUBHN',
+     'SABAL2'  => 'SABAL',
+     'SABDL2'  => 'SABDL',
+     'SADDL2'  => 'SADDL',
+     'SADDW2'  => 'SADDW',
+     'SMLAL2'  => 'SMLAL',
+     'SMLSL2'  => 'SMLSL',
+     'SMULL2'  => 'SMULL',
+     'SSUBL2'  => 'SSUBL',
+     'SSUBW2'  => 'SSUBW',
+     'SUBHN2'  => 'SUBHN',
+     'UABAL2'  => 'UABAL',
+     'UABDL2'  => 'UABDL',
+     'UADDL2'  => 'UADDL',
+     'UADDW2'  => 'UADDW',
+     'UMLAL2'  => 'UMLAL',
+     'UMLSL2'  => 'UMLSL',
+     'UMULL2'  => 'UMULL',
+     'USUBL2'  => 'USUBL',
+     'USUBW2'  => 'USUBW',
+
+     'SQDMLSL2' => 'SQDMLSL',
+     'SQDMULL2' => 'SQDMULL',
+
+     'FCVTXN2' => 'FCVTXN',
+
+     'SQRSHRN2' => 'SQRSHRN',
+     'SQRSHRUN2' => 'SQRSHRUN'
+);
+
+my %enum_fixes = (
+    'B_COND'  => 'B_COND_IMM',
+    'B'       => 'B_IMM',
+    'CBNZ_64' => 'CBNZ_IMM_64',
+    'CBNZ_32' => 'CBNZ_IMM_32',
+    'CBZ_64' => 'CBZ_IMM_64',
+    'CBZ_32' => 'CBZ_IMM_32',
+    'FABD_SCALAR_VEC' => 'SIMD_FABD_VEC',
+    'FABD_SCALAR' => 'SIMD_FABD_SCALAR',
+    'FABS_VEC' => 'SIMD_FABS_REG_VEC',
+    'FACGE_SCALAR_VEC' => 'SIMD_FACGE_VEC',
+    'FACGE_SCALAR' => 'SIMD_FACGE_SCALAR',
+    'FACGT_SCALAR' => 'SIMD_FACGT_SCALAR',
+    'FACGT_SCALAR_VEC' => 'SIMD_FACGT_VEC',
+    'FADD_VEC' => 'SIMD_FADD_VEC',
+    'FADDP_SCALAR' => 'SIMD_FADDP',
+    'FADDP_VEC' => 'SIMD_FADDP_VEC',
+    'FCMEQ_REG_SCALAR_VEC' => 'SIMD_FCMEQ_REG_VEC',
+    'FCMEQ_SCALAR_VEC_ZERO' => 'SIMD_FCMEQ_REG_VEC_ZERO',
+    'FCMEQ_REG_SCALAR' => 'SIMD_FCMEQ_REG_SCALAR',
+    'FCMEQ_SCALAR_ZERO' => 'SIMD_FCMEQ_REG_SCALAR_ZERO',
+    'FCMGE_REG_SCALAR_VEC' => 'SIMD_FCMGE_REG_VEC',
+    'FCMGE_SCALAR_ZERO' => 'SIMD_FCMGE_REG_SCALAR_ZERO',
+    'FCMGE_SCALAR_VEC_ZERO' => 'SIMD_FCMGE_REG_VEC_ZERO',
+    'FCMGE_REG_SCALAR' => 'SIMD_FCMGE_REG_SCALAR',
+    'FCMGT_SCALAR_ZERO' => 'SIMD_FCMGT_REG_SCALAR_ZERO',
+    'FCMGT_REG_SCALAR' => 'SIMD_FCMGT_REG_SCALAR',
+    'FCMGT_REG_SCALAR_VEC' => 'SIMD_FCMGT_REG_VEC',
+    'FCMGT_SCALAR_VEC_ZERO' => 'SIMD_FCMGT_REG_VEC_ZERO',
+    'FCMLE_SCALAR_VEC_ZERO' => 'SIMD_FCMLE_REG_VEC_ZERO',
+    'FCMLE_SCALAR_ZERO' => 'SIMD_FCMLE_REG_SCALAR_ZERO',
+    'FCMLT_SCALAR_VEC_ZERO' => 'SIMD_FCMLT_REG_VEC_ZERO',
+    'FCMLT_SCALAR_ZERO' => 'SIMD_FCMLT_REG_SCALAR_ZERO',
+    'FCVT_SINGLE_FROM_HP_TO_DP' => 'FCVT_FROM_HP_TO_DP',
+    'FCVTL_VEC' => 'SIMD_FCVTL_REG',
+    'FCVTN_VEC' => 'SIMD_FCVTN_REG',
+    'FCVTXN_SCALAR' => 'SIMD_FCVTXN_REG_SCALAR',
+    'FCVTXN_SCALAR_VEC' => 'SIMD_FCVTXN_REG_VEC',
+    'FDIV_VEC' => 'SIMD_FDIV_VEC',
+    'FMAX_VEC' => 'SIMD_FMAX_VEC',
+    'FMAXNM_VEC' => 'SIMD_FMAXNM_VEC',
+    'FMAXNMP_VEC' => 'SIMD_FMAXNMP_VEC',
+    'FMAXNMP_SCALAR' => 'SIMD_FMAXNMP',
+    'FMAXNMV_SCALAR' => 'SIMD_FMAXNMV',
+    'FMAXP_VEC' => 'SIMD_FMAXP_VEC',
+    'FMAXP_SCALAR' => 'SIMD_FMAXP',
+    'FMAXV_SCALAR' => 'SIMD_FMAXV',
+    'FMIN_VEC' => 'SIMD_FMIN_VEC',
+    'FMINNM_VEC' => 'SIMD_FMINNM_VEC',
+    'FMINNMP_VEC' => 'SIMD_FMINNMP_VEC',
+    'FMINNMP_SCALAR' => 'SIMD_FMINNMP',
+    'FMINNMV_SCALAR' => 'SIMD_FMINNMV',
+    'FMINP_SCALAR' => 'SIMD_FMINP',
+    'FMINP_VEC' => 'SIMD_FMINP_VEC',
+    'FMINV_SCALAR' => 'SIMD_FMINV',
+    'FMLA_SCALAR_ELEM' => 'SIMD_FMLA_SCALAR_ELEM',
+    'FMLA_SCALAR_VEC_ELEM' => 'SIMD_FMLA_VEC_VEC_ELEM',
+    'FMLA_VEC' => 'SIMD_FMLA_VEC',
+    'FMLS_SCALAR_VEC_ELEM' => 'SIMD_FMLS_VEC_VEC_ELEM',
+    'FMLS_VEC' => 'SIMD_FMLS_VEC',
+    'FMLS_SCALAR_ELEM' => 'SIMD_FMLS_SCALAR_ELEM',
+    'FMUL_SCALAR_ELEM' => 'SIMD_FMUL_SCALAR_ELEM',
+    'FMUL_SCALAR_VEC_ELEM' => 'SIMD_FMUL_VEC_VEC_ELEM',
+    'FMUL_VEC' => 'SIMD_FMUL_VEC',
+    'FMULX_SCALAR' => 'SIMD_FMULX_SCALAR',
+    'FMULX_SCALAR_ELEM' => 'SIMD_FMULX_SCALAR_ELEM',
+    'FMULX_SCALAR_VEC' => 'SIMD_FMULX_VEC',
+    'FMULX_SCALAR_VEC_ELEM' => 'SIMD_FMULX_VEC_VEC_ELEM',
+    'FNEG_VEC' => 'SIMD_FNEG_REG_VEC',
+    'FRECPE_SCALAR_VEC' => 'SIMD_FRECPE_REG_VEC',
+    'FRECPE_SCALAR' => 'SIMD_FRECPE_REG_SCALAR',
+    'FRECPS_SCALAR' => 'SIMD_FRECPS_SCALAR',
+    'FRECPS_SCALAR_VEC' => 'SIMD_FRECPS_VEC',
+    'FRECPX_SCALAR' => 'SIMD_FRECPX_REG',
+    'FRINTA_VEC' => 'SIMD_FRINTA_REG_VEC',
+    'FRINTI_VEC' => 'SIMD_FRINTI_REG_VEC',
+    'FRINTM_VEC' => 'SIMD_FRINTM_REG_VEC',
+    'FRINTN_VEC' => 'SIMD_FRINTN_REG_VEC',
+    'FRINTP_VEC' => 'SIMD_FRINTP_REG_VEC',
+    'FRINTX_VEC' => 'SIMD_FRINTX_REG_VEC',
+    'FRINTZ_VEC' => 'SIMD_FRINTZ_REG_VEC',
+    'FRSQRTE_SCALAR_VEC' => 'SIMD_FRSQRTE_REG_VEC',
+    'FRSQRTE_SCALAR' => 'SIMD_FRSQRTE_REG_SCALAR',
+    'FRSQRTS_SCALAR_VEC' => 'SIMD_FRSQRTS_VEC',
+    'FRSQRTS_SCALAR' => 'SIMD_FRSQRTS_SCALAR',
+    'FSQRT_VEC' => 'SIMD_FSQRT_REG_VEC',
+    'FSUB_VEC' => 'SIMD_FSUB_VEC',
+    'LDNP_64' => 'LDNP_OFF_64',
+    'LDNP_32' => 'LDNP_OFF_32',
+    'MOVK_64' => 'MOVK_IMM_64',
+    'MOVK_32' => 'MOVK_IMM_32',
+    'MOVN_64' => 'MOVN_IMM_64',
+    'MOVN_32' => 'MOVN_IMM_32',
+    'MOVZ_32' => 'MOVZ_IMM_32',
+    'MOVZ_64' => 'MOVZ_IMM_64',
+
+    'LD2_MULT_REG_POST_STRUCT' => 'SIMD_LD2_REG_OFF_MULT_POST_STRUCT',
+    'LD2_OFF_MULT_STRUCT'      => 'SIMD_LD2_OFF_MULT_POST_STRUCT',
+
+    'LD3_MULT_REG_POST_STRUCT' => 'SIMD_LD3_REG_OFF_MULT_POST_STRUCT',
+    'LD3_OFF_MULT_STRUCT'      => 'SIMD_LD3_OFF_MULT_POST_STRUCT',
+
+    'LD4_MULT_REG_POST_STRUCT' => 'SIMD_LD4_REG_OFF_MULT_POST_STRUCT',
+    'LD4_OFF_MULT_STRUCT'      => 'SIMD_LD4_OFF_MULT_POST_STRUCT',
+
+    'LDR_32' => 'LDR_REG_32',
+    'LDR_64' => 'LDR_REG_64',
+
+    'LDR_REG_32' => 'LDR_REG_OFF_32',
+    'LDR_REG_64' => 'LDR_REG_OFF_64',
+
+    'LDR_IMM_OFF_64' => 'LDR_IMM_REG_64',
+    'LDR_IMM_OFF_32' => 'LDR_IMM_REG_32',
+
+    'SMADDL_64' => 'SMADDL', 
+    'SMSUBL_64' => 'SMSUBL', 
+    'SMULH_64' => 'SMULH', 
+    'UMADDL_64' => 'UMADDL', 
+    'UMSUBL_64' => 'UMSUBL', 
+    'UMULH_64' => 'UMULH', 
+    'ZIP2' => 'SIMD_ZIP2', 
+    'SIMD_ADDHN_VEC' => 'SIMD_ADDHN', 
+    'SIMD_ADDV_SCALAR' => 'SIMD_ADDV', 
+    'SIMD_AESD_SCALAR' => 'AESD', 
+    'SIMD_AESE_SCALAR' => 'AESE', 
+    'SIMD_AESIMC_SCALAR' => 'AESIMC', 
+    'SIMD_AESMC_SCALAR' => 'AESMC', 
+    'SIMD_BIF_VEC' => 'SIMD_BIF', 
+    'SIMD_BIT_VEC' => 'SIMD_BIT', 
+    'SIMD_BSL_VEC' => 'SIMD_BSL', 
+    'SIMD_CNT_VEC' => 'SIMD_CNT_REG', 
+    'SIMD_EXT_SCALAR' => 'SIMD_EXT', 
+    'SIMD_NOT_VEC' => 'SIMD_NOT_REG', 
+    'SIMD_PMUL_VEC' => 'SIMD_PMUL', 
+    'SIMD_PMULL_VEC' => 'SIMD_PMULL', 
+    'SIMD_RADDHN_VEC' => 'SIMD_RADDHN', 
+    'SIMD_REV64_VEC' => 'SIMD_REV64_REG', 
+    'SIMD_RSHRN_VEC' => 'SIMD_RSHRN_SHIFT_IMM', 
+    'SIMD_RSUBHN_VEC' => 'SIMD_RSUBHN', 
+    'SIMD_SABA_VEC' => 'SIMD_SABA', 
+    'SIMD_SABAL_VEC' => 'SIMD_SABAL', 
+    'SIMD_SABD_VEC' => 'SIMD_SABD', 
+    'SIMD_SABDL_VEC' => 'SIMD_SABDL', 
+    'SIMD_SADALP_VEC' => 'SIMD_SADALP_REG', 
+    'SIMD_SADDL_VEC' => 'SIMD_SADDL', 
+    'SIMD_SADDLP_VEC' => 'SIMD_SADDLP_REG', 
+    'SIMD_SADDLV_SCALAR' => 'SIMD_SADDLV', 
+    'SIMD_SADDW_VEC' => 'SIMD_SADDW', 
+    'SIMD_SHA1C_SCALAR' => 'SHA1C_REG', 
+    'SIMD_SHA1H_SCALAR' => 'SHA1H_REG', 
+    'SIMD_SHA1M_SCALAR' => 'SHA1M_REG', 
+    'SIMD_SHA1P_SCALAR' => 'SHA1P_REG', 
+    'SIMD_SHA1SU0_SCALAR' => 'SHA1SU0_REG', 
+    'SIMD_SHA1SU1_SCALAR' => 'SHA1SU1_REG', 
+    'SIMD_SHA256H_SCALAR' => 'SHA256H_REG', 
+    'SIMD_SHA256H2_SCALAR' => 'SHA256H2_REG', 
+    'SIMD_SHA256SU0_SCALAR' => 'SHA256SU0_REG', 
+    'SIMD_SHA256SU1_SCALAR' => 'SHA256SU1_REG', 
+    'SIMD_SHADD_VEC' => 'SIMD_SHADD', 
+    'SIMD_SHLL_VEC' => 'SIMD_SHLL_REG', 
+    'SIMD_SHRN_VEC' => 'SIMD_SHRN_SHIFT_IMM', 
+    'SIMD_SHSUB_VEC' => 'SIMD_SHSUB', 
+    'SIMD_SMAX_VEC' => 'SIMD_SMAX', 
+    'SIMD_SMAXP_VEC' => 'SIMD_SMAXP', 
+    'SIMD_SMAXV_SCALAR' => 'SIMD_SMAXV', 
+    'SIMD_SMIN_VEC' => 'SIMD_SMIN', 
+    'SIMD_SMINP_VEC' => 'SIMD_SMINP', 
+    'SIMD_SMINV_SCALAR' => 'SIMD_SMINV', 
+    'SIMD_SRHADD_VEC' => 'SIMD_SRHADD', 
+    'SIMD_SSHLL_VEC' => 'SIMD_SSHLL_SHIFT_IMM', 
+    'SIMD_SSUBL_VEC' => 'SIMD_SSUBL', 
+    'SIMD_SSUBW_VEC' => 'SIMD_SSUBW', 
+    'SIMD_SUBHN_VEC' => 'SIMD_SUBHN', 
+    'SIMD_TRN1_SCALAR' => 'SIMD_TRN1', 
+    'SIMD_TRN2_SCALAR' => 'SIMD_TRN2', 
+    'SIMD_UABA_VEC' => 'SIMD_UABA', 
+    'SIMD_UABAL_VEC' => 'SIMD_UABAL', 
+    'SIMD_UABD_VEC' => 'SIMD_UABD', 
+    'SIMD_UABDL_VEC' => 'SIMD_UABDL', 
+    'SIMD_UADALP_VEC' => 'SIMD_UADALP_REG', 
+    'SIMD_UADDL_VEC' => 'SIMD_UADDL', 
+    'SIMD_UADDLP_VEC' => 'SIMD_UADDLP_REG', 
+    'SIMD_UADDLV_SCALAR' => 'SIMD_UADDLV', 
+    'SIMD_UADDW_VEC' => 'SIMD_UADDW', 
+    'SIMD_UHADD_VEC' => 'SIMD_UHADD', 
+    'SIMD_UHSUB_VEC' => 'SIMD_UHSUB', 
+    'SIMD_UMAX_VEC' => 'SIMD_UMAX', 
+    'SIMD_UMAXP_VEC' => 'SIMD_UMAXP', 
+    'SIMD_UMAXV_SCALAR' => 'SIMD_UMAXV', 
+    'SIMD_UMIN_VEC' => 'SIMD_UMIN', 
+    'SIMD_UMINP_VEC' => 'SIMD_UMINP', 
+    'SIMD_UMINV_SCALAR' => 'SIMD_UMINV', 
+    'SIMD_URECPE_VEC' => 'SIMD_URECPE_REG', 
+    'SIMD_URHADD_VEC' => 'SIMD_URHADD', 
+    'SIMD_URSQRTE_VEC' => 'SIMD_URSQRTE_REG', 
+    'SIMD_USHLL_VEC' => 'SIMD_USHLL_SHIFT_IMM', 
+    'SIMD_USUBL_VEC' => 'SIMD_USUBL', 
+    'SIMD_USUBW_VEC' => 'SIMD_USUBW', 
+    'SIMD_UZP1_SCALAR' => 'SIMD_UZP1', 
+    'SIMD_UZP2_SCALAR' => 'SIMD_UZP2', 
+    'SIMD_XTN_VEC' => 'SIMD_XTN_REG', 
+    'SIMD_ZIP1_SCALAR' => 'SIMD_ZIP1',
+
+    'LDTRB' => 'LDTRB_REG',
+    'LDTRH' => 'LDTRH_REG',
+    'LDTRSW' => 'LDTRSW_REG',
+    'LDURB' => 'LDURB_IMM_REG',
+    'LDURH' => 'LDURH_IMM_REG',
+    'LDURSW' => 'LDURSW_IMM_REG',
+    'PRFUM' => 'PRFUM_IMM_REG',
+    'STTRB' => 'STTRB_REG',
+    'STTRH' => 'STTRH_REG',
+    'STURB' => 'STURB_IMM_REG',
+    'STURH' => 'STURH_IMM_REG',
+
+    'LDTR_64' => 'LDTR_REG_64', 
+    'LDTR_32' => 'LDTR_REG_32', 
+    'LDTRSB_64' => 'LDTRSB_REG_64', 
+    'LDTRSB_32' => 'LDTRSB_REG_32', 
+    'LDTRSH_32' => 'LDTRSH_REG_32', 
+    'LDTRSH_64' => 'LDTRSH_REG_64', 
+    'LDURSB_64' => 'LDURSB_IMM_REG_64', 
+    'LDURSB_32' => 'LDURSB_IMM_REG_32', 
+    'LDURSH_32' => 'LDURSH_IMM_REG_32', 
+    'LDURSH_64' => 'LDURSH_IMM_REG_64', 
+    'STTR_32' => 'STTR_REG_32', 
+    'STTR_64' => 'STTR_REG_64', 
+    'SIMD_ABS_SCALAR_VEC' => 'SIMD_ABS_REG_VEC', 
+    'SIMD_ABS_SCALAR' => 'SIMD_ABS_REG_SCALAR', 
+    'SIMD_CMLE_SCALAR_ZERO' => 'SIMD_CMLE_REG_SCALAR_ZERO', 
+    'SIMD_CMLE_SCALAR_VEC_ZERO' => 'SIMD_CMLE_REG_VEC_ZERO', 
+
+    'SIMD_CMLT_SCALAR_ZERO' => 'SIMD_CMLT_REG_SCALAR_ZERO', 
+    'SIMD_CMLT_SCALAR_VEC_ZERO' => 'SIMD_CMLT_REG_VEC_ZERO', 
+
+    'SIMD_INS_SCALAR_ELEM' => 'SIMD_INS_ELEM', 
+    'SIMD_INS_SCALAR' => 'SIMD_INS', 
+    'SIMD_SHL_SCALAR_VEC' => 'SIMD_SHL_SHIFT_IMM_VEC', 
+    'SIMD_SHL_SCALAR' => 'SIMD_SHL_SHIFT_IMM_SCALAR', 
+    'SIMD_SLI_SCALAR' => 'SIMD_SLI_SHIFT_IMM_SCALAR', 
+    'SIMD_SLI_SCALAR_VEC' => 'SIMD_SLI_SHIFT_IMM_VEC', 
+    'SIMD_SMOV_IMM_MOD_64' => 'SIMD_SMOV_64', 
+    'SIMD_SMOV_IMM_MOD_32' => 'SIMD_SMOV_32', 
+    'SIMD_SQABS_SCALAR_VEC' => 'SIMD_SQABS_REG_VEC', 
+    'SIMD_SQABS_SCALAR' => 'SIMD_SQABS_REG_SCALAR', 
+    'SIMD_SQNEG_SCALAR_VEC' => 'SIMD_SQNEG_REG_VEC', 
+    'SIMD_SQNEG_SCALAR' => 'SIMD_SQNEG_REG_SCALAR', 
+    'SIMD_SQRSHRN_SCALAR_VEC' => 'SIMD_SQRSHRN_SHIFT_IMM_VEC', 
+    'SIMD_SQRSHRN_SCALAR' => 'SIMD_SQRSHRN_SHIFT_IMM_SCALAR', 
+    'SIMD_SQRSHRUN_SCALAR' => 'SIMD_SQRSHRUN_SHIFT_IMM_SCALAR', 
+    'SIMD_SQRSHRUN_SCALAR_VEC' => 'SIMD_SQRSHRUN_SHIFT_IMM_VEC', 
+
+    'SIMD_SQSHLU_SCALAR_VEC' => 'SIMD_SQSHLU_SHIFT_IMM_VEC', 
+    'SIMD_SQSHLU_SCALAR' => 'SIMD_SQSHLU_SHIFT_IMM_SCALAR', 
+
+    'SIMD_SQSHRN_SCALAR_VEC' => 'SIMD_SQSHRN_SHIFT_IMM_VEC', 
+    'SIMD_SQSHRN_SCALAR' => 'SIMD_SQSHRN_SHIFT_IMM_SCALAR', 
+
+    'SIMD_SQSHRUN_SCALAR_VEC' => 'SIMD_SQSHRUN_SHIFT_IMM_VEC', 
+    'SIMD_SQSHRUN_SCALAR' => 'SIMD_SQSHRUN_SHIFT_IMM_SCALAR', 
+
+    'SIMD_SQXTN_SCALAR_VEC' => 'SIMD_SQXTN_REG_VEC', 
+    'SIMD_SQXTN_SCALAR' => 'SIMD_SQXTN_REG_SCALAR', 
+
+    'SIMD_SQXTUN_SCALAR' => 'SIMD_SQXTUN_REG_SCALAR', 
+    'SIMD_SQXTUN_SCALAR_VEC' => 'SIMD_SQXTUN_REG_VEC', 
+    'SIMD_SRI_SCALAR' => 'SIMD_SRI_SHIFT_IMM_SCALAR', 
+    'SIMD_SRI_SCALAR_VEC' => 'SIMD_SRI_SHIFT_IMM_VEC', 
+    'SIMD_SRSHR_SCALAR_VEC' => 'SIMD_SRSHR_SHIFT_IMM_VEC', 
+    'SIMD_SRSHR_SCALAR' => 'SIMD_SRSHR_SHIFT_IMM_SCALAR', 
+
+    'SIMD_SRSRA_SCALAR_VEC' => 'SIMD_SRSRA_SHIFT_IMM_VEC', 
+    'SIMD_SRSRA_SCALAR' => 'SIMD_SRSRA_SHIFT_IMM_SCALAR', 
+
+    'SIMD_SSHR_SCALAR_VEC' => 'SIMD_SSHR_SHIFT_IMM_VEC', 
+    'SIMD_SSHR_SCALAR' => 'SIMD_SSHR_SHIFT_IMM_SCALAR', 
+    'SIMD_SSRA_SCALAR' => 'SIMD_SSRA_SHIFT_IMM_SCALAR', 
+    'SIMD_SSRA_SCALAR_VEC' => 'SIMD_SSRA_SHIFT_IMM_VEC', 
+    'SIMD_SUQADD_SCALAR' => 'SIMD_SUQADD_REG_SCALAR', 
+    'SIMD_SUQADD_SCALAR_VEC' => 'SIMD_SUQADD_REG_VEC', 
+
+    'SIMD_UQRSHRN_SCALAR_VEC' => 'SIMD_UQRSHRN_SHIFT_IMM_VEC', 
+    'SIMD_UQRSHRN_SCALAR' => 'SIMD_UQRSHRN_SHIFT_IMM_SCALAR', 
+
+    'SIMD_UQSHRN_SCALAR_VEC' => 'SIMD_UQSHRN_SHIFT_IMM_VEC', 
+    'SIMD_UQSHRN_SCALAR' => 'SIMD_UQSHRN_SHIFT_IMM_SCALAR', 
+
+    'SIMD_UQXTN_SCALAR_VEC' => 'SIMD_UQXTN_REG_VEC', 
+    'SIMD_UQXTN_SCALAR' => 'SIMD_UQXTN_REG_SCALAR', 
+
+    'SIMD_URSHR_SCALAR' => 'SIMD_URSHR_SHIFT_IMM_SCALAR', 
+    'SIMD_URSHR_SCALAR_VEC' => 'SIMD_URSHR_SHIFT_IMM_VEC', 
+    'SIMD_URSRA_SCALAR' => 'SIMD_URSRA_SHIFT_IMM_SCALAR', 
+    'SIMD_URSRA_SCALAR_VEC' => 'SIMD_URSRA_SHIFT_IMM_VEC', 
+    'SIMD_USHR_SCALAR_VEC' => 'SIMD_USHR_SHIFT_IMM_VEC', 
+    'SIMD_USHR_SCALAR' => 'SIMD_USHR_SHIFT_IMM_SCALAR', 
+    'SIMD_USQADD_SCALAR' => 'SIMD_USQADD_REG_SCALAR', 
+    'SIMD_USQADD_SCALAR_VEC' => 'SIMD_USQADD_REG_VEC', 
+    'SIMD_USRA_SCALAR_VEC' => 'SIMD_USRA_SHIFT_IMM_VEC', 
+    'SIMD_USRA_SCALAR' => 'SIMD_USRA_SHIFT_IMM_SCALAR',
+    'SIMD_ADDP_SCALAR' => 'SIMD_ADDP',
+    'SIMD_CMEQ_REG_SCALAR_VEC' => 'SIMD_CMEQ_REG_VEC',
+    'SIMD_CMEQ_SCALAR_ZERO' => 'SIMD_CMEQ_REG_SCALAR_ZERO',
+    'SIMD_CMEQ_SCALAR_VEC_ZERO' => 'SIMD_CMEQ_REG_VEC_ZERO',
+    'SIMD_CMGE_SCALAR_VEC_ZERO' => 'SIMD_CMGE_REG_VEC_ZERO',
+    'SIMD_CMGE_SCALAR_ZERO' => 'SIMD_CMGE_REG_SCALAR_ZERO',
+    'SIMD_CMGE_REG_SCALAR_VEC' => 'SIMD_CMGE_REG_VEC',
+    'SIMD_CMGT_REG_SCALAR_VEC' => 'SIMD_CMGT_REG_VEC',
+    'SIMD_CMGT_SCALAR_ZERO' => 'SIMD_CMGT_REG_SCALAR_ZERO',
+    'SIMD_CMGT_SCALAR_VEC_ZERO' => 'SIMD_CMGT_REG_VEC_ZERO',
+    'SIMD_CMHI_REG_SCALAR_VEC' => 'SIMD_CMHI_REG_VEC',
+    'SIMD_CMHS_REG_SCALAR_VEC' => 'SIMD_CMHS_REG_VEC',
+    'SIMD_CMTST_SCALAR_VEC' => 'SIMD_CMTST_VEC',
+    'SIMD_DUP_SCALAR_VEC_ELEM' => 'SIMD_DUP_VEC_ELEM',
+    'SIMD_DUP_SCALAR' => 'SIMD_DUP',
+    'SIMD_SQADD_SCALAR_VEC' => 'SIMD_SQADD_VEC',
+    'SIMD_SQDMLAL_SCALAR_VEC_ELEM' => 'SIMD_SQDMLAL_VEC_VEC_ELEM',
+    'SIMD_SQDMLSL_SCALAR_VEC_ELEM' => 'SIMD_SQDMLSL_VEC_VEC_ELEM',
+    'SIMD_SQDMULH_SCALAR_VEC_ELEM' => 'SIMD_SQDMULH_VEC_VEC_ELEM',
+    'SIMD_SQDMULL_SCALAR_VEC_ELEM' => 'SIMD_SQDMULL_VEC_VEC_ELEM',
+    'SIMD_SQRSHL_SCALAR_VEC' => 'SIMD_SQRSHL_VEC',
+    'SIMD_SQSHL_IMM_SCALAR_VEC' => 'SIMD_SQSHL_SHIFT_IMM_VEC',
+    'SIMD_SQSHL_REG_SCALAR_VEC' => 'SIMD_SQSHL_REG_VEC',
+    'SIMD_SQSHL_IMM_SCALAR' => 'SIMD_SQSHL_SHIFT_IMM_SCALAR',
+    'SIMD_SQSUB_SCALAR_VEC' => 'SIMD_SQSUB_VEC',
+    'SIMD_SRSHL_SCALAR_VEC' => 'SIMD_SRSHL_VEC',
+    'SIMD_SSHL_SCALAR_VEC' => 'SIMD_SSHL_VEC',
+    'SIMD_SSHL_SCALAR' => 'SIMD_SSHL_SCALAR',
+    'SIMD_UCVTF_SCALAR_VEC_FIXED' => 'SIMD_UCVTF_SHIFT_IMM_SCALAR_VEC_FIXED',
+    'SIMD_UCVTF_SCALAR_VEC' => 'SIMD_UCVTF_REG_SCALAR_VEC',
+    'SIMD_UQADD_SCALAR_VEC' => 'SIMD_UQADD_VEC',
+    'SIMD_UQRSHL_SCALAR_VEC' => 'SIMD_UQRSHL_VEC',
+    'SIMD_UQSHL_IMM_SCALAR_VEC' => 'SIMD_UQSHL_SHIFT_IMM_VEC',
+    'SIMD_UQSHL_REG_SCALAR_VEC' => 'SIMD_UQSHL_REG_VEC',
+    'SIMD_UQSHL_IMM_SCALAR' => 'SIMD_UQSHL_SHIFT_IMM_SCALAR',
+    'SIMD_UQSUB_SCALAR_VEC' => 'SIMD_UQSUB_VEC',
+    'SIMD_URSHL_SCALAR_VEC' => 'SIMD_URSHL_VEC',
+    'SIMD_USHL_SCALAR_VEC' => 'SIMD_USHL_VEC',
+
+    'SIMD_STNP_128' => 'SIMD_STNP_OFF_8_128',
+    'SIMD_STNP_32' => 'SIMD_STNP_OFF_32',
+    'SIMD_STNP_64' => 'SIMD_STNP_OFF_64',
+
+    'LDRB_REG_32' => 'LDRB_REG_OFF',
+    'LDRB_IMM_OFF' => 'LDRB_IMM_REG_OFF',
+    'LDRH_IMM_OFF' => 'LDRH_IMM_REG_OFF',
+    'LDRH_REG_32' => 'LDRH_REG_OFF',
+
+    'LDRSB_IMM_OFF_32' => 'LDRSB_IMM_REG_32',
+    'LDRSB_IMM_OFF_64' => 'LDRSB_IMM_REG_64',
+    'LDRSB_REG_32'     => 'LDRSB_REG_OFF_32',
+    'LDRSB_REG_64'     => 'LDRSB_REG_OFF_64',
+
+    'LDRSH_IMM_OFF_32' => 'LDRSH_IMM_REG_32',
+    'LDRSH_IMM_OFF_64' => 'LDRSH_IMM_REG_64',
+    'LDRSH_REG_32'     => 'LDRSH_REG_OFF_32',
+    'LDRSH_REG_64'     => 'LDRSH_REG_OFF_64',
+
+    'LDRSW'         => 'LDRSW_REG',
+    'LDRSW_IMM_OFF' => 'LDRSW_IMM_REG_OFF',
+    'LDRSW_REG_64'  => 'LDRSW_REG_OFF',
+
+    'LDUR_32' => 'LDUR_IMM_REG_32',
+    'LDUR_64' => 'LDUR_IMM_REG_64',
+
+    'PRFM'     => 'PRFM_REG',
+    'PRFM_IMM' => 'PRFM_REG_OFF',
+    'PRFM_REG' => 'PRFM_IMM_REG',
+
+    'REV32_64' => 'REV32',
+
+    'ST2_MULT_REG_POST_STRUCT' => 'SIMD_ST2_REG_OFF_MULT_POST_STRUCT',
+    'ST2_OFF_MULT_STRUCT' => 'SIMD_ST2_OFF_MULT_STRUCT',
+    'ST3_MULT_REG_POST_STRUCT' => 'SIMD_ST3_REG_OFF_MULT_POST_STRUCT',
+    'ST3_OFF_MULT_STRUCT' => 'SIMD_ST3_OFF_MULT_STRUCT',
+    'ST4_MULT_REG_POST_STRUCT' => 'SIMD_ST4_REG_OFF_MULT_POST_STRUCT',
+    'ST4_OFF_MULT_STRUCT' => 'SIMD_ST4_OFF_MULT_STRUCT',
+    'STNP_64' => 'STNP_OFF_64',
+    'STNP_32' => 'STNP_OFF_32', 
+
+    'STR_REG_64' => 'STR_REG_OFF_64',
+    'STR_REG_32' => 'STR_REG_OFF_32',
+    'STR_IMM_OFF_64' => 'STR_IMM_REG_64',
+    'STR_IMM_OFF_32' => 'STR_IMM_REG_32',
+
+    'STRB_IMM_OFF' => 'STRB_IMM_REG_OFF',
+    'STRB_REG_32'  => 'STRB_REG_OFF',
+    'STRH_IMM_OFF' => 'STRH_IMM_REG_OFF',
+    'STRH_REG_32'  => 'STRH_REG_OFF',
+
+    'STUR_32' => 'STUR_IMM_REG_32',
+    'STUR_64' => 'STUR_IMM_REG_64', 
+
+    'SIMD_CLS_VEC'   => 'SIMD_CLS_REG_VEC',
+    'SIMD_CLZ_VEC'   => 'SIMD_CLZ_REG_VEC',
+    'SIMD_RBIT_VEC'  => 'SIMD_RBIT_REG_VEC',
+    'SIMD_REV16_VEC' => 'SIMD_REV16_REG_VEC',
+    'SIMD_REV32_VEC' => 'SIMD_REV32_REG_VEC',
+
+    'BIC_IMM_VEC_32' => 'SIMD_BIC_IMM_MOD_VEC_32',
+    'BIC_IMM_VEC_16' => 'SIMD_BIC_IMM_MOD_VEC_16', 
+    'ORR_IMM_VEC_16' => 'SIMD_ORR_IMM_MOD_VEC_16',
+    'ORR_IMM_VEC_32' => 'SIMD_ORR_IMM_MOD_VEC_32',
+
+    'SIMD_LD1_ONE_REG_MULT_STRUCT_NO_OFF'   => 'SIMD_LD1_ONE_REG_MULT_STRUCT',
+    'SIMD_LD1_TWO_REG_MULT_STRUCT_NO_OFF'   => 'SIMD_LD1_TWO_REG_MULT_STRUCT',
+    'SIMD_LD1_THREE_REG_MULT_STRUCT_NO_OFF' => 'SIMD_LD1_THREE_REG_MULT_STRUCT',
+    'SIMD_LD1_FOUR_REG_MULT_STRUCT_NO_OFF'  => 'SIMD_LD1_FOUR_REG_MULT_STRUCT',
+
+    'SIMD_LD1_ONE_REG_MULT_STRUCT_POST_REG'   => 'SIMD_LD1_ONE_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_LD1_TWO_REG_MULT_STRUCT_POST_REG'   => 'SIMD_LD1_TWO_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_LD1_THREE_REG_MULT_STRUCT_POST_REG' => 'SIMD_LD1_THREE_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_LD1_FOUR_REG_MULT_STRUCT_POST_REG'  => 'SIMD_LD1_FOUR_REG_OFF_MULT_POST_STRUCT',
+
+    'SIMD_LD1_THREE_REG_MULT_STRUCT_POST_OFF' => 'SIMD_LD1_IMM_THREE_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_LD1_FOUR_REG_MULT_STRUCT_POST_OFF'  => 'SIMD_LD1_IMM_FOUR_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_LD1_TWO_REG_MULT_STRUCT_POST_OFF'   => 'SIMD_LD1_IMM_TWO_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_LD1_ONE_REG_MULT_STRUCT_POST_OFF'   => 'SIMD_LD1_IMM_ONE_REG_OFF_MULT_POST_STRUCT',
+
+    'SIMD_LDNP_128' => 'SIMD_LDNP_OFF_8_128',
+    'SIMD_LDNP_32'  => 'SIMD_LDNP_OFF_32',
+    'SIMD_LDNP_64'  => 'SIMD_LDNP_OFF_64',
+
+    'SIMD_LDP_REG_OFF_128'  => 'SIMD_LDP_REG_OFF_8_128',
+    'SIMD_LDP_REG_PRE_128'  => 'SIMD_LDP_REG_PRE_8_128',
+    'SIMD_LDP_REG_POST_128' => 'SIMD_LDP_REG_POST_8_128',
+
+    'SIMD_STP_REG_POST_128' => 'SIMD_STP_REG_POST_8_128',
+    'SIMD_STP_REG_PRE_128'  => 'SIMD_STP_REG_PRE_8_128',
+    'SIMD_STP_REG_OFF_128'  => 'SIMD_STP_REG_OFF_8_128',
+
+    'SIMD_STUR_32'  => 'SIMD_STUR_IMM_REG_32',
+    'SIMD_STUR_16'  => 'SIMD_STUR_IMM_REG_16',
+    'SIMD_STUR_64'  => 'SIMD_STUR_IMM_REG_64',
+    'SIMD_STUR_8'   => 'SIMD_STUR_IMM_REG_8',
+    'SIMD_STUR_128' => 'SIMD_STUR_IMM_REG_8_128',
+
+    'SIMD_LDUR_32'  => 'SIMD_LDUR_IMM_REG_32',
+    'SIMD_LDUR_64'  => 'SIMD_LDUR_IMM_REG_64',
+    'SIMD_LDUR_8'   => 'SIMD_LDUR_IMM_REG_8',
+    'SIMD_LDUR_128' => 'SIMD_LDUR_IMM_REG_8_128',
+    'SIMD_LDUR_16'  => 'SIMD_LDUR_IMM_REG_16',
+
+    'SIMD_LDR_64'  => 'SIMD_LDR_REG_64',
+    'SIMD_LDR_128' => 'SIMD_LDR_REG_8_128',
+    'SIMD_LDR_32'  => 'SIMD_LDR_REG_32',
+
+    'SIMD_STR_IMM_REG_128' => 'SIMD_STR_IMM_REG_8_128',
+    'SIMD_LDR_IMM_REG_128' => 'SIMD_LDR_IMM_REG_8_128',
+
+    'SIMD_ST1_ONE_REG_MULT_STRUCT_NO_OFF'   => 'SIMD_ST1_ONE_REG_MULT_STRUCT',
+    'SIMD_ST1_TWO_REG_MULT_STRUCT_NO_OFF'   => 'SIMD_ST1_TWO_REG_MULT_STRUCT',
+    'SIMD_ST1_THREE_REG_MULT_STRUCT_NO_OFF' => 'SIMD_ST1_THREE_REG_MULT_STRUCT',
+    'SIMD_ST1_FOUR_REG_MULT_STRUCT_NO_OFF'  => 'SIMD_ST1_FOUR_REG_MULT_STRUCT',
+
+    'SIMD_ST1_ONE_REG_MULT_STRUCT_POST_REG'   => 'SIMD_ST1_ONE_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_ST1_TWO_REG_MULT_STRUCT_POST_REG'   => 'SIMD_ST1_TWO_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_ST1_THREE_REG_MULT_STRUCT_POST_REG' => 'SIMD_ST1_THREE_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_ST1_FOUR_REG_MULT_STRUCT_POST_REG'  => 'SIMD_ST1_FOUR_REG_OFF_MULT_POST_STRUCT',
+
+    'SIMD_ST1_THREE_REG_MULT_STRUCT_POST_OFF' => 'SIMD_ST1_IMM_THREE_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_ST1_FOUR_REG_MULT_STRUCT_POST_OFF'  => 'SIMD_ST1_IMM_FOUR_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_ST1_TWO_REG_MULT_STRUCT_POST_OFF'   => 'SIMD_ST1_IMM_TWO_REG_OFF_MULT_POST_STRUCT',
+    'SIMD_ST1_ONE_REG_MULT_STRUCT_POST_OFF'   => 'SIMD_ST1_IMM_ONE_REG_OFF_MULT_POST_STRUCT'
+);
+
+my %need_qualifiers = (
+   'SIMD_ADDHN' => 1,
+   'SIMD_FCVTXN_REG_SCALAR' => 1,
+   'SIMD_LD2_REG_OFF_MULT_POST_STRUCT' => 1,
+   'SIMD_LD3_REG_OFF_MULT_POST_STRUCT' => 1,
+   'SIMD_LD3_REG_OFF_MULT_POST_STRUCT' => 1,
+   'SIMD_LD4_REG_OFF_MULT_POST_STRUCT' => 1,
+   'SIMD_PMULL' => 1,
+   'SIMD_RADDHN' => 1,
+   'SIMD_RSUBHN' => 1,
+   'SIMD_SABAL' => 1,
+   'SIMD_SABDL' => 1,
+   'SIMD_SADDL' => 1,
+   'SIMD_SADDW' => 1,
+   'SIMD_SQDMLSL_SCALAR_VEC' => 1,
+   'SIMD_SQDMULL_SCALAR_ELEM' => 1,
+   'SIMD_SQDMULL_SCALAR_VEC' => 1,
+   'SIMD_SQRSHRN_SHIFT_IMM_SCALAR' => 1,
+   'SIMD_SSUBL' => 1,
+   'SIMD_SSUBW' => 1,
+   'SIMD_ST2_REG_OFF_MULT_POST_STRUCT' => 1,
+   'SIMD_ST3_REG_OFF_MULT_POST_STRUCT' => 1,
+   'SIMD_ST4_REG_OFF_MULT_POST_STRUCT' => 1,
+   'SIMD_SUBHN' => 1,
+   'SIMD_UABAL' => 1,
+   'SIMD_UABDL' => 1,
+   'SIMD_UADDL' => 1,
+   'SIMD_UADDW' => 1,
+   'SIMD_USUBL' => 1,
+   'SIMD_USUBW' => 1,
+
+   'SIMD_SMLAL_VEC' => 1,
+   'SIMD_SMLSL_VEC' => 1,
+   'SIMD_SMULL_VEC' => 1,
+   'SIMD_UMLAL_VEC' => 1,
+   'SIMD_UMLSL_VEC' => 1,
+   'SIMD_UMULL_VEC' => 1
+);
+
+my %add_qualifiers = (
+    'SIMD_LD2_REG_OFF_MULT_POST_STRUCT/LD2 { <Vt>.<T>, <Vt2>.<T> }, [<Xn|SP>], <Xm>'  => 'Rm != 0x1f',
+    'SIMD_LD2_REG_OFF_MULT_POST_STRUCT/LD2 { <Vt>.<T>, <Vt2>.<T> }, [<Xn|SP>], <imm>' => 'Rm == 0x1f',
+    'SIMD_LD3_REG_OFF_MULT_POST_STRUCT/LD3 { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T> }, [<Xn|SP>], <Xm>'  => 'Rm != 0x1f',
+    'SIMD_LD3_REG_OFF_MULT_POST_STRUCT/LD3 { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T> }, [<Xn|SP>], <imm>' => 'Rm == 0x1f',
+    'SIMD_LD4_REG_OFF_MULT_POST_STRUCT/LD4 { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T>, <Vt4>.<T> }, [<Xn|SP>], <Xm>'  => 'Rm != 0x1f',
+    'SIMD_LD4_REG_OFF_MULT_POST_STRUCT/LD4 { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T>, <Vt4>.<T> }, [<Xn|SP>], <imm>' => 'Rm == 0x1f',
+
+    'SIMD_ST2_REG_OFF_MULT_POST_STRUCT/ST2 { <Vt>.<T>, <Vt2>.<T> }, [<Xn|SP>], <Xm>'  => 'Rm != 0x1f',
+    'SIMD_ST2_REG_OFF_MULT_POST_STRUCT/ST2 { <Vt>.<T>, <Vt2>.<T> }, [<Xn|SP>], <imm>' => 'Rm == 0x1f',
+    'SIMD_ST3_REG_OFF_MULT_POST_STRUCT/ST3 { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T> }, [<Xn|SP>], <Xm>'  => 'Rm != 0x1f',
+    'SIMD_ST3_REG_OFF_MULT_POST_STRUCT/ST3 { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T> }, [<Xn|SP>], <imm>' => 'Rm == 0x1f',
+    'SIMD_ST4_REG_OFF_MULT_POST_STRUCT/ST4 { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T>, <Vt4>.<T> }, [<Xn|SP>], <Xm>'  => 'Rm != 0x1f',
+    'SIMD_ST4_REG_OFF_MULT_POST_STRUCT/ST4 { <Vt>.<T>, <Vt2>.<T>, <Vt3>.<T>, <Vt4>.<T> }, [<Xn|SP>], <imm>' => 'Rm == 0x1f'
+);
+
+&process_input();
+
+sub skip_instance {
+    return 1 if ($instance_number and $instance_number==2 and $instance_name eq 'FCVTXN_SCALAR');
+    return 1 if $instance_name eq 'FCVTZS_FIXED' or $instance_name eq 'FCVTZU_FIXED';
+    return 1 if $instance_name eq 'SIMD_SCVTF_FIXED' and $assembly eq 'CheckFPAdvSIMDEnabled64();';
+    return 1 if $instance_name eq 'SIMD_SQDMLAL_SCALAR_ELEM' and $instance_number == 2;
+#    return 1 if $instance_name eq 'SIMD_SQDMLAL_SCALAR_VEC' and $instance_number == 2;
+    return 1 if $instance_name eq 'SIMD_SQDMLSL_SCALAR_ELEM' and $instance_number == 2;
+    return 1 if $instruction eq 'SQDMLSL2 (vector)' and $assembly eq 'SQDMLSL <Va><d>, <Vb><n>, <Vb><m>';
+    return 1 if $instruction eq 'SQDMULL2 (by element)' and $assembly eq 'SQDMULL <Va><d>, <Vb><n>, <Vm>.<Ts>[<index>]';
+    return 1 if $instruction eq 'SQDMULL2 (vector)' and $assembly eq 'SQDMULL <Va><d>, <Vb><n>, <Vb><m>';
+    return 1 if $instance_name eq 'SIMD_SQRSHRN_SCALAR' and $instance_number==2;
+    return 1 if $instance_name eq 'SIMD_SQRSHRUN_SCALAR' and $instance_number==2;
+    return 1 if $instance_name eq 'SIMD_SQSHRN_SCALAR' and $instance_number==2;
+    return 1 if $instance_name eq 'SIMD_SQSHRUN_SCALAR' and $instance_number==2;
+    return 1 if $instance_name eq 'SIMD_SQXTN_SCALAR' and $instance_number==2;
+    return 1 if $instance_name eq 'SIMD_SQXTUN_SCALAR' and $instance_number==2;
+    return 1 if $instance_name eq 'SIMD_UCVTF_FIXED' and $assembly eq 'CheckFPAdvSIMDEnabled64();';
+    return 1 if $instance_name eq 'SIMD_UQRSHRN_SCALAR' and $instance_number==2;
+    return 1 if $instance_name eq 'SIMD_UQXTN_SCALAR' and $instance_number==2;
+
+    return 1 if $instance_name eq 'SIMD_SQDMLAL_SCALAR_VEC' and $instance_number==2 and $assembly eq 'SQDMLAL <Va><d>, <Vb><n>, <Vb><m>';
+
+    return 1 if $instance_name eq 'SIMD_SCVTF_FIXED' and $assembly eq 'CheckFPAdvSIMDEnabled64();';
+
+    return 1 if $instance_name eq 'SIMD_SQRSHRN_SCALAR' and $instance_number eq 2 and $assembly eq 'SQRSHRN <Vb><d>, <Va><n>, #<shift>';
+
+    return 1 if $instance_name eq 'SIMD_SQRSHRUN_SHIFT_IMM_SCALAR' and $instance_number eq 2 and $assembly eq 'SQRSHRUN <Vb><d>, <Va><n>, #<shift>';
+
+    return 1 if $instance_name eq 'SIMD_SQSHRN_SHIFT_IMM_SCALAR' and $instance_number eq 2 and $assembly eq 'SQSHRN <Vb><d>, <Va><n>, #<shift>';
+
+    return 1 if $instance_name eq 'SIMD_SQSHRUN_SHIFT_IMM_SCALAR' and $instance_number eq 2 and $assembly eq 'SQSHRUN <Vb><d>, <Va><n>, #<shift>';
+    return 1 if $instance_name eq 'SIMD_SQXTN_REG_SCALAR' and $instance_number eq 2 and $assembly eq 'SQXTN <Vb><d>, <Va><n>';
+    return 1 if $instance_name eq 'SIMD_SQXTUN_REG_SCALAR' and $instance_number eq 2 and $assembly eq 'SQXTUN <Vb><d>, <Va><n>';
+    return 1 if $instance_name eq 'SIMD_UQRSHRN_SHIFT_IMM_SCALAR' and $instance_number eq 2 and $assembly eq 'UQRSHRN <Vb><d>, <Va><n>, #<shift>';
+    return 1 if $instance_name eq 'SIMD_UQXTN_REG_SCALAR' and $instance_number eq 2 and $assembly eq 'UQXTN <Vb><d>, <Va><n>';
+
+    return 1 if $instance_name eq 'SIMD_FCVTXN_REG_SCALAR' and $instance_number eq 2;
+    return 1 if $instance_name eq 'SIMD_SQDMLSL_SCALAR_VEC' and $instance_number eq 2;
+    return 1 if $instance_name eq 'SIMD_SQDMULL_SCALAR_ELEM' and $instance_number eq 2;
+    return 1 if $instance_name eq 'SIMD_SQDMULL_SCALAR_VEC' and $instance_number eq 2;
+    return 1 if $instance_name eq 'SIMD_SQRSHRN_SHIFT_IMM_SCALAR' and $instance_number eq 2;
+
+    return 0;
+}
+
+sub add_qualifiers {
+    return if not defined($need_qualifiers{$instance_name});
+    return if $qualifier ne '';
+
+    #print STDERR "<$instance_name>\n";
+
+    if ($printf =~ /\(Q\=\=0\)/) {
+        $printf = $` . $';
+        $qualifier = 'Q==0';
+    } elsif ($printf =~ /\(Q\=\=1\)/) {
+        $printf = $` . $';
+        $qualifier = 'Q==1';
+    } elsif (defined($add_qualifiers{"$instance_name/$assembly"})) {
+        $qualifier = $add_qualifiers{"$instance_name/$assembly"};
+    }
+}
+
+sub fix_sqdmlal {
+  return if $instance_name ne 'SIMD_SQDMLAL_SCALAR_VEC';
+
+  $instruction = 'SQDMLAL';   # strip '(vector)'
+}
+
+sub fix_zip2 {
+    return if $instruction ne 'ZIP2';
+
+    $assembly = 'ZIP2 <Vd>.<T>, <Vn>.<T>, <Vm>.<T>';
+    $printf = 'printf("ZIP1 V%d.%s, V%d.%s, V%d.%s",packet->Rd.Value(),Tparm(packet->size.Value(),packet->Q.Value()).c_str(),packet->Rn.Value(),Tparm(packet->size.Value(),packet->Q.Value()).c_str(),packet->Rm.Value(),Tparm(packet->size.Value(),packet->Q.Value()).c_str());';
+}
+
+sub fix_qualified_instruction {
+    return if not ($instance_number and $assembly =~ /(\w+)\{2\} /);
+
+    my $base_instr = $1;
+    #print "base instr: '$base_instr' instruction: '$instruction'\n";
+    if ($base_instr eq $instruction or ($base_instr . '2') eq substr($instruction,0,length($base_instr)+1)) {
+        # first of two instances. qualifier is Q...
+        $qualifier .= ',' if $qualifier ne '';
+        if ($instance_number == 2) {
+           $qualifier .= 'Q==1';
+           $assembly =~ s/{2\}/2/;
+	} else {
+           $qualifier .= 'Q==0';
+           $assembly =~ s/{2\}//;
+           $printf =~ s/2 / /;
+	}
+        $instruction = $base_instr;
+     } else {
+            # think this is okay...
+            #print "OOPS! unexpected input???\n";
+            #die;
+     }
+}
+
+sub fix_qualified_assembly {
+    if ($assembly =~ /\(Q\=\=0\)/) {
+        if ($instance_number) {
+           if ($instance_number == 1) {
+               $assembly =~ s/\(Q\=\=0\)//;             
+           } else {
+               #$instruction =~ s/ (vector)//;
+               #$instruction .= 'SMLAL2';
+               #$assembly =~ s/ /2 /;
+               #$printf =~ s/ /2 /;
+               $qualifier = 'Q==1';
+               $assembly =~ s/\(Q\=\=1\)//;
+               $printf =~ s/\(Q\=\=1\)//;
+	   }
+	} else {
+	    print "OOPS! asm for instance '$instance_name' contains instance condition???\n";
+            die;
+	}
+    }
+}
+
+sub fix_instruction_name {
+    if ($instruction =~ / \(/) {
+        my $iname = $`;
+        my $inotes = $instruction;
+        $instruction = $iname;
+        $notes = $inotes if $notes eq '';
+    }
+
+    if (defined($instruction_names_fixes{$instruction})) {
+        $instruction = $instruction_names_fixes{$instruction};
+    }
+}
+
+sub coerce_instance_name_to_enum {
+    if (defined($enum_fixes{$instance_name})) {
+        $instance_name = $enum_fixes{$instance_name};
+    }
+}
+
+sub extract_more_operands_from_assembly {
+    my($asm) = @_;
+
+    my @ta = split(/ /,$asm);
+
+    foreach my $ta (@ta) {
+       my $operand = '';
+       my $is_dest = 0;
+
+       if ($ta =~ /(\<V\>\<d\>)/ or $ta =~ /(\<Vd\>\.\<T\>)/ or $ta =~ /(\<Vd\>\.\<Ta\>)/ or $ta =~ /(\<Va\>\<d\>)/) {
+	   $operand = '<Vd>';
+           $is_dest = 1;
+       } elsif ($ta =~ /(\<V\>\<m\>)/ or $ta =~ /(\<Vm\>\.\<T\>)/ or $ta =~ /(\<Vm\>\.\<T[abs]\>)/ or $ta =~ /(\<V[ab]\>\<m\>)/ ) {
+	   $operand = '<Vm>';
+       } elsif ($ta =~ /(\<V\>\<n\>)/ or $ta =~ /(\<Vn\>\.\<T\>)/ or $ta =~ /(\<Vn\>\.\<T[abs]\>)/ or $ta =~ /(\<V[ab]\>\<n\>)/ ) {
+	   $operand = '<Vn>';
+       } elsif ($ta =~ /(\<Wd\|WSP\>)/ or $ta =~ /(\<Xd\|SP\>)/) {
+           $operand = $1;
+           $is_dest = 1;
+       } elsif ($ta =~ /\<R\>\<m\>/) {
+           $operand = '<Rm>';
+       } elsif ($ta =~ /\<R\>\<n\>/) {
+           $operand = '<Rn>';
+       } elsif ($ta =~ /\<R\>\<t\>/) {
+           $operand = '<Rt>';
+       } elsif ($ta =~ /\<Bt\>/) {
+           $operand = '<Bt>';
+       } 
+
+
+       if ($operand ne '') {
+           if ($is_dest) {
+	       my $found = 0;
+               foreach my $op (@dest_operands) {
+		   $found = 1 if $operand eq $op;
+	       }
+               push(@dest_operands,$operand) if not $found;
+	   } else {
+	       my $found = 0;
+               foreach my $op (@src_operands) {
+		   $found = 1 if $operand eq $op;
+	       }
+	       push(@src_operands,$operand)  if not $found;
+	   }
+       }
+    }
+}
+
+sub fixup_printf {
+    $printf =~ s/printf\(/sprintf\(tbuf\,/;
+}
+
+sub add_bic_imm_vec_16 {
+
+}
+
+sub process_instance {
+    &fix_sqdmlal();
+    &fix_zip2();
+
+    &fix_qualified_instruction();
+    &fix_qualified_assembly();
+
+    if (defined($instance_name_fixes{"$instance_name/$assembly"})) {
+        $instance_name = $instance_name_fixes{"$instance_name/$assembly"};
+    } 
+    elsif (defined($instance_name_fixes_qualified{"$instance_name/$qualifier"})) {
+        $instance_name = $instance_name_fixes_qualified{"$instance_name/$qualifier"};
+    }
+
+    &fix_instruction_name();
+
+    &coerce_instance_name_to_enum();
+
+    &add_qualifiers();
+
+    &extract_more_operands_from_assembly($assembly);
+
+    &fixup_printf();
+
+    &output_instance() if not &skip_instance();
+    &reset_instance();
+}
+
+sub output_instance {
+    &output_line('instance-name',$instance_name);
+    &output_line('instance-num',$instance_number);
+    &output_line('qualifier',$qualifier);
+    &output_line('notes',$notes);
+    &output_line('instruction',$instruction);
+    &output_line('alias of',$alias);
+    &output_line('section',$section);
+    &output_line('page',$page);
+    &output_line('destination operands',join(',',@dest_operands));
+    &output_line('source operands',join(',',@src_operands));
+    &output_line('assembly',$assembly);
+    &output_line('printf',$printf);
+    print "\n";
+}
+
+sub reset_instance {
+   $instance_name = '';
+   $instance_number = '';
+   $qualifier = '';
+   $notes = '';
+   $instruction = '';
+   $alias = '';
+   $section = '';
+   $page = '';
+   @dest_operands = ();
+   @src_operands = ();
+   $assembly = '';
+   $printf = '';
+}
+
+sub output_line {
+    my ($prefix,$txt) = @_;
+
+    print "${prefix}: $txt\n" if $txt ne '' or $prefix =~ /operands/;
+}
+ 
+sub process_input {
+
+ while(<>) {
+    next if /^\s*$/;
+
+    chomp;
+
+    if (/\'([^\']+)\' \(ALIAS IGNORED\)/) {
+        push(@ignored_aliases,$1);
+        print $_ . "\n\n";
+        next;
+    }
+
+    if (/^instance\-name\: /) {
+        $instance_name = $';
+        next;
+    }
+    if (/^instance\-num\: (\d+)/) {
+        $instance_number = $1;
+        next;
+    }
+    if (/^qualifier\: /) {
+        $qualifier = $';
+        next;
+    }
+    if (/^notes\: /) {
+        $notes = $';
+        next;
+    }
+    if (/^instruction\: /) {
+        $instruction = $';
+        next;
+    }
+    if (/^alias of\: /) {
+        $alias = $';
+        next;
+    }
+    if (/^section\: /) {
+        $section = $';
+        next;
+    }
+    if (/^page\: /) {
+        $page = $';
+        next;
+    }
+    if (/^destination operands\: /) {
+        my $tbuf = $';
+        @dest_operands = split(",",$tbuf); 
+        next;
+    }
+    if (/^source operands\: /) {
+        my $tbuf = $';
+        @src_operands = split(",",$tbuf);
+        next;
+    }
+    if (/^assembly\: /) {
+        $assembly = $';
+        next;
+    }
+    if (/^printf\: /) {
+        $printf = $';
+        &process_instance();
+        next;
+    }
+
+    print "UNEXPECTED INPUT? " . $_;
+    die;
+ }
+}
+
+

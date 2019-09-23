@@ -1,0 +1,666 @@
+syntax = "proto2";
+
+package scaffold_SAPI;
+
+option java_outer_classname = "ScaffoldSAPI";
+
+message Command {
+  enum Type {
+      BOOT=0;
+      INITIAL_CPU_STATE=1;
+      FINAL_CPU_STATE=2;
+      WRITE_PHYSICAL_MEMORY=3;
+      READ_PHYSICAL_MEMORY=4;
+      STEP_CPU_STATE=5;
+      STEP_PACKET=6;
+      HANGUP=7;
+      ACKNOWLEDGE=8;
+  }
+
+  enum Phase {
+      NONE=-1;
+      FETCH_INSTRUCTION=0;
+      DECODE=1;
+      FETCH_OPERANDS=2;
+      EXECUTE=3;
+      ACCESS_MEMORY=4;
+      WRITEBACK=5;
+      RETIRE=6;
+  }
+
+  required Type   type         = 1;
+  optional int32  cpuid        = 2  [default = 0];
+  optional int32  count        = 3  [default = 10];
+  optional int32  seed         = 4  [default = -1];
+  optional bool   do_break     = 5  [default = false];
+  optional int32  verbose      = 6  [default = 0];
+  optional int32  step_index   = 7  [default = -1];
+  optional Phase  phase        = 8  [default = NONE];
+  optional int32  item         = 9  [default = 1];
+  optional string elf_in_file  = 10 [default = ""];
+  optional string elf_out_file = 11 [default = ""];
+}
+
+message Response {
+  enum Type {
+      BOOT=0;
+      INIT=1;
+      ENABLE_EXCEPTIONS=2;
+      POWER_DOWN=3;
+      INIT_FREERUN=4;
+      FREERUN_STEP=5;
+      LOAD=6;
+      SAVE=7;
+      CHECKPOINT=8;
+      BREAKPOINT=9;
+  }
+
+  required Type   type = 1;
+  required int32  status = 2 [default = -1];
+  optional string runlog = 3 [default = ""];
+  optional string errlog = 4 [default = ""];
+  optional string tracelog = 5 [default = ""];
+  optional string debuglog = 6 [default = ""];
+}
+
+message Acknowledge {
+  optional int32      cpuid                 = 1 [default = -1];     // which cpu
+  optional int32      step_count            = 2 [default = -1];     // break after N instructions,
+  optional int32      instr_phase           = 3 [default = -1];     //    on instruction phase M
+  optional bool       report_step_updates   = 4 [default = false];  // report step updates until step-count or breakpoint reached
+  optional bool       report_memory_updates = 5 [default = false];  // report memory updates until step-count or breakpoint reached
+  optional bool       reset_bkpts           = 6 [default = false];  // clear any breakpoints previously set
+  repeated Breakpoint bkpts                 = 7;                    // breakpoints
+}
+  
+message Breakpoint {
+  optional string  bkpt_grp_name   = 1;          // name this breakpoint
+
+  optional fixed64 instr_addr_la   = 2;          // can break on instr LA      
+  optional fixed64 instr_addr_pa   = 3;          //  or PA with
+  optional fixed64 instr_addr_mask = 4 [default = 0xffffffffffffffff];  //    address mask
+
+  optional fixed32 opcode          = 5;          // opcode
+  optional fixed32 opcode_mask     = 6 [default = 0xffffffff];          //   opcode mask
+
+  optional fixed64 data_addr_la    = 7;          // can break on data LA
+  optional fixed64 data_addr_pa    = 8;          //  or PA with
+  optional fixed64 data_addr_mask  = 9;          //    address mask
+
+  optional bool    read_access     = 10;         // break on read
+  optional bool    write_access    = 11;         //   and/or write, for either data OR register access
+
+  optional bool    non_secure      = 12;         // break on non-secure access (match current secure state if not set)
+  optional int32   memory_type     = 13;         // 0==normal, 1==device, 2==exclusive (any type if not specified)
+  optional bool    shared          = 14;         // break on shared memory access (any if not specified)
+
+  optional int32   cpuid           = 15;         // cpu ID,
+  optional int32   asid            = 16;         //    asid used for both instr and data matches
+
+  optional int32   reg_group       = 17;         // GPreg==0, SPreg==1, VFPreg==3, ASIMDreg=4, SYSreg==5, Pstate==6
+  optional int32   reg_index       = 18;         // register index
+  optional fixed64 reg_val         = 19;         // value/
+  optional fixed64 rval_mask       = 20 [default = 0xffffffffffffffff]; //   mask to match on
+  optional fixed64 reg_val_hi      = 21;         // value/
+  optional fixed64 rval_mask_hi    = 22 [default = 0xffffffffffffffff]; //   mask to match on (hi order 64bits ASIMD only)
+
+  optional int32   excep_class     = 23;         // arch (1) vs internal (2) vs generation (3)
+  optional int32   excep_type_arch = 24;         // A64 exception type Packet::archExceptionType() 
+  optional int32   excep_imm       = 25;         // specifically for SVC or SMC
+  optional int32   excep_type_int  = 26;         // internal exception type Packet::internalExceptionType() 
+
+  // other match stuff: TLB, cache, MMU, operand access...
+}
+
+
+message BaseLevel {
+  optional fixed32  SCR_EL3 = 1;
+
+  optional fixed64  SP_EL0  = 2;   
+  optional fixed64  SP_EL1  = 3;
+  optional fixed64  SP_EL2  = 4;
+  optional fixed64  SP_EL3  = 5;
+
+  repeated GPRegister GP = 6;
+}
+
+message Configuration {
+  optional fixed64 ID_AA64DFR0_EL1  = 1;
+  optional fixed64 ID_AA64MMFR0_EL1 = 2;
+  optional fixed64 ID_AA64PFR0_EL1  = 3;
+  optional fixed64 ID_AA64ISAR0_EL1 = 4;
+
+  optional fixed32 MIDR_EL1         = 5;
+  optional fixed32 VPIDR_EL2        = 6;
+  optional fixed32 CTR_EL0          = 7;
+  optional fixed32 DCZID_EL0        = 8;
+
+  optional fixed64 RVBAR_EL1        = 9;
+  optional fixed64 RVBAR_EL2        = 10;
+  optional fixed64 RVBAR_EL3        = 11;
+
+  optional fixed64 AFSR0_EL1        = 12;  
+  optional fixed64 AFSR0_EL2        = 13;
+  optional fixed64 AFSR0_EL3        = 14;
+  optional fixed64 AFSR1_EL1        = 15;  
+  optional fixed64 AFSR1_EL2        = 16;
+  optional fixed64 AFSR1_EL3        = 17;
+}
+
+message ProcID {
+  optional fixed32 MPIDR_EL1  = 1;
+  optional fixed32 VMPIDR_EL2 = 2;
+  optional fixed32 REVIDR_EL1 = 3;
+}
+
+message FPU {
+  optional fixed32 CPACR_EL1 = 1;
+  optional fixed32 CPTR_EL2  = 2;
+  optional fixed32 CPTR_EL3  = 3;
+  optional fixed32 FPCR      = 4;
+  optional fixed32 FPSR      = 5;
+
+  repeated SimdReg V = 6;
+}
+
+message Debug {
+  optional fixed32 MDSCR_EL1      = 1;
+  optional fixed64 MDCCSR_EL0     = 2; 
+  optional fixed64 DBGDTR_EL0     = 3;
+  optional fixed64 DBGDTRRX_EL0   = 4;
+  optional fixed64 DBGDTRTX_EL0   = 5;
+  optional fixed64 DLR_EL0        = 6;
+  optional fixed64 DSPSR_EL0      = 7;
+  optional fixed64 CONTEXTIDR_EL1 = 8;
+}
+
+message ExceptionState {
+  optional fixed64 SPSR_EL1  = 1;
+  optional fixed64 SPSR_EL2  = 2;
+  optional fixed64 SPSR_EL3  = 3;
+
+  optional fixed64 ELR_EL1   = 4;
+  optional fixed64 ELR_EL2   = 5;
+  optional fixed64 ELR_EL3   = 6;
+  optional fixed64 ESR_EL1   = 7;
+  optional fixed64 ESR_EL2   = 8;
+  optional fixed64 ESR_EL3   = 9;
+  optional fixed64 FAR_EL1   = 10;
+  optional fixed64 FAR_EL2   = 11;
+  optional fixed64 FAR_EL3   = 12;
+}
+
+message VMSA {
+  optional fixed64 VBAR_EL1  = 1;
+  optional fixed64 VBAR_EL2  = 2;
+  optional fixed64 VBAR_EL3  = 3;
+  optional fixed64 TCR_EL1   = 4; 
+  optional fixed64 TCR_EL2   = 5;
+  optional fixed64 TCR_EL3   = 6;
+  optional fixed64 MAIR_EL1  = 7;  
+  optional fixed64 MAIR_EL2  = 8;
+  optional fixed64 MAIR_EL3  = 9;
+  optional fixed32 SCTLR_EL1 = 10; 
+  optional fixed32 SCTLR_EL2 = 11; 
+  optional fixed32 SCTLR_EL3 = 12;  
+  optional fixed64 TTBR0_EL1 = 13;  
+  optional fixed64 TTBR1_EL1 = 14;
+  optional fixed64 TTBR0_EL2 = 15;
+  optional fixed64 TTBR0_EL3 = 16;
+  optional fixed64 HCR_EL2   = 17; 
+  optional fixed64 PAR_EL1   = 18;
+}
+
+message ResetMgmt {
+  optional fixed64 RMR_EL1 = 1;  
+  optional fixed64 RMR_EL2 = 2;
+  optional fixed64 RMR_EL3 = 3;
+}
+
+message ThreadRegs {
+  optional fixed32 TPIDR_EL0 = 1;
+  optional fixed32 TPIDR_EL1 = 2;
+  optional fixed32 TPIDR_EL2 = 3;
+  optional fixed32 TPIDR_EL3 = 4;
+}
+
+message GICSystemRegs {
+  optional fixed32 ICC_PMR_EL1     = 1;
+  optional fixed32 ICC_IAR0_EL1    = 2;
+  optional fixed32 ICC_EORI0_EL1   = 3;
+  optional fixed32 ICC_HPPIR0_EL1  = 4;
+  optional fixed32 ICC_BPR0_EL1    = 5; 
+  optional fixed32 ICC_AP0R0_EL1   = 6;
+  optional fixed32 ICC_AP0R1_EL1   = 7;
+  optional fixed32 ICC_AP0R2_EL1   = 8;
+  optional fixed32 ICC_AP0R3_EL1   = 9;
+  optional fixed32 ICC_AP1R0_EL1   = 10;
+  optional fixed32 ICC_AP1R1_EL1   = 11;
+  optional fixed32 ICC_AP1R2_EL1   = 12;
+  optional fixed32 ICC_AP1R3_EL1   = 13;
+  optional fixed32 ICC_DIR_EL1     = 14;
+  optional fixed32 ICC_RPR_EL1     = 15;
+  optional fixed64 ICC_SGI1R_EL1   = 16;
+  optional fixed64 ICC_ASGI1R_EL1  = 17;
+  optional fixed64 ICC_SGI0R_EL1   = 18;
+  optional fixed32 ICC_IAR1_EL1    = 19;
+  optional fixed32 ICC_EOIR1_EL1   = 20;
+  optional fixed32 ICC_HPPIR1_EL1  = 21;
+  optional fixed32 ICC_BPR1_EL1    = 22;
+  optional fixed32 ICC_CTLR_EL1    = 23;
+  optional fixed32 ICC_SRE_EL1     = 24;
+  optional fixed32 ICC_IGRPEN0_EL1 = 25;
+  optional fixed32 ICC_IGRPEN1_EL1 = 26;
+  optional fixed32 ICC_SRE_EL2     = 27;
+  optional fixed32 ICC_CTLR_EL3    = 28;
+  optional fixed32 ICC_SRE_EL3     = 29;
+  optional fixed32 ICC_IGRPEN1_EL3 = 30;
+}
+
+message GenericTimer {
+  optional fixed32 CNTFRQ_EL0     = 1;
+  optional fixed32 CNTHCTL_EL2    = 2;
+  optional fixed32 CNTHP_CTL_EL2  = 3;
+  optional fixed64 CNTHP_CVAL_EL2 = 4;
+  optional fixed32 CNTHP_TVAL_EL2 = 5;
+  optional fixed32 CNTKCTL_EL1    = 6;
+  optional fixed32 CNTP_CTL_EL0   = 7;
+  optional fixed64 CNTP_CVAL_EL0  = 8;
+  optional fixed32 CNTP_TVAL_EL0  = 9;
+  optional fixed64 CNTPCT_EL0     = 10;
+  optional fixed32 CNTPS_CTL_EL1  = 11;
+  optional fixed64 CNTPS_CVAL_EL1 = 12;
+  optional fixed32 CNTPS_TVAL_EL1 = 13;
+  optional fixed32 CNTV_CTL_EL0   = 14;
+  optional fixed64 CNTV_CVAL_EL0  = 15;
+  optional fixed32 CNTV_TVAL_EL0  = 16;
+  optional fixed64 CNTVCT_EL0     = 17;
+  optional fixed64 CNTVOFF_EL2    = 18;
+}
+
+message UART_PL011 {
+    optional fixed32 UARTDR        = 1;
+    optional fixed32 UARTRSR       = 2;
+    optional fixed32 UARTFR        = 3;
+    optional fixed32 UARTILPR      = 4;
+    optional fixed32 UARTIBRD      = 5;
+    optional fixed32 UARTFBRD      = 6;
+    optional fixed32 UARTLCR_H     = 7;
+    optional fixed32 UARTTCR       = 8;
+    optional fixed32 UARTIFLS      = 9;
+    optional fixed32 UARTIMSC      = 10;
+    optional fixed32 UARTRIS       = 11;
+    optional fixed32 UARTMIS       = 12;
+    optional fixed32 UARTDMACR     = 13;
+    optional fixed32 UARTPeriphID0 = 14;
+    optional fixed32 UARTPeriphID1 = 15;
+    optional fixed32 UARTPeriphID2 = 16;
+    optional fixed32 UARTPeriphID3 = 17;
+    optional fixed32 UARTCellID0   = 18;
+    optional fixed32 UARTCellID1   = 19;
+    optional fixed32 UARTCellID2   = 20;
+    optional fixed32 UARTCellID3   = 21;
+}
+
+message UartSlice {
+  required fixed64    clock   = 1;  // system counter value,
+  required int32      core_id = 2;  //   cpu which accessed uart,
+  required UART_PL011 state   = 3;  //     uart register update(s)
+}
+
+message UART {
+  required fixed64   PA_base = 1;  // uart memory mapped registers physical base address
+  repeated UartSlice updates = 2;  // updates to uart registers state (entry 0 is initial state)
+}
+
+// synchronous exception...
+
+message Exception {
+  required string exception_class   = 1;
+  required string exception_type    = 2;
+  required string exception_subtype = 3;
+  required string exception_imm     = 4;
+  optional string testbench_error   = 5;  // not yet recorded in sim-trace
+  optional int32  state             = 6;  //          "
+ }
+
+// asynchronous exception, ie, FIQ/IRQ interrupt, assumed to be fielded thru GIC (generic interrupt controller)...
+
+message AsyncEvent {
+  required fixed64 clock      = 1;  // clock (system counter value) on which interrupt occurred
+  required string  type       = 2;  // IRQ or FIQ
+  optional int32   id         = 3;  // IRQ ID
+  optional int32   spi_offset = 4;  // SPI offset
+  optional int32   ppi_no     = 5;  // PPI number
+}
+
+// async events that occurred over course of a simulation...
+
+message AsyncEvents {
+  repeated AsyncEvent event = 1;
+}
+  
+// scaffold (poor mans platform)...
+
+message Scaffold {
+  repeated Cpu              core       = 1;   // a scaffold (platform) has one or more cores,
+  optional Memory           ram        = 2;   // main memory,
+  optional ExclusiveMonitor global_mon = 3;   // global moniter(s),
+  repeated UART             uart       = 4;   // uart(s)
+  repeated AsyncEvents      events     = 5;   // interrupts
+}
+
+// need to add tlbs, exclusive-monitors, instr/data blocks...
+
+message Memory {
+  repeated PhysMemBlock phys_mem = 1;
+}
+
+message PhysMemBlock {
+  required fixed64 address       = 1;   // NOT block address
+  optional int32   size          = 2;   // either record size of access
+  optional bool    read          = 3;   // true for read, false for write
+  optional bool    do_init       = 4;   // true to cause initialization of new access
+  optional int32   outcome       = 5;   // for read indicates how many bytes had defined values
+  optional bytes   memblock      = 6;   //  or actual bytes
+  optional fixed64 block_address = 7;   // block address,
+  optional bytes   blockmem      = 8;   //   bytes (in block),
+  optional fixed64 free_bytes    = 9;   //     free bytes markers
+}
+
+// a 'cpu' consists of an initial state, 1 or more instruction traces, and one or more translations...
+// the last slice would represent the last instruction executed.
+// the last translation would represent the latest translation.
+
+// as new translations come into being they are added to the list. 
+// NOTE: redundant entries are NOT prevented.
+
+message Cpu {
+  required CpuSlice    initial_state = 1; 
+  repeated CpuSlice    slice         = 2;
+  repeated Translation translations  = 3;
+}
+
+// a cpu 'slice' is cpu register state and execution info for a single instruction execution...
+
+message CpuSlice {
+  // updates from one instruction execution to the next:
+
+  optional BaseLevel        base      = 1;
+  optional Configuration    cfg       = 2;
+  optional ProcID           ids       = 3;
+  optional FPU		    fpu       = 4;
+  optional Debug            dbg       = 5;
+  optional ExceptionState   excep     = 6;
+  optional VMSA             mmu       = 7;
+  optional ResetMgmt        reset     = 8;
+  optional ThreadRegs       thread    = 9;
+  optional ExclusiveMonitor local_mon = 10;
+  optional Packet           trace     = 11;
+  optional GenericTimer     timer     = 12;  // the system counter is shared among multiple cores, but
+                                             // each core has its own set of timer regs
+  optional GICSystemRegs    gic_sregs = 13;  // one or more GIC system registers may be shared among
+                                             //   cores, but we'll track on per core basis
+}
+
+// fetch instruction, account for endianness...
+// instruction memory access + translation...
+
+message Fetch {
+  required int32 instr_size_in_bytes  = 1;
+  required int32 access_size_in_bytes = 2;
+  required bool  big_endian           = 3;
+
+  required bytes mbuf = 4;
+}
+
+// decode instruction to yield primary opcode, simulator instruction index,
+// instruction field values...
+
+message Decode {
+  required fixed32    Opcode         = 1;
+  required uint32     primary_opcode = 2;
+  required string     A64InstrEnum   = 3;
+  
+  repeated InstrField field_ops      = 4;
+}
+
+// fetch register values...
+
+message FetchOperands {
+  repeated RegisterUpdate srcRegsGP    = 1;
+  repeated RegisterUpdate srcRegsSys   = 2;
+  repeated SimdReg        srcRegsASIMD = 3;
+}
+
+message Execute {
+}
+
+// an access to memory could be one or more actual memory accesses
+// and one or more translations (indexes in the cores list of translations)
+
+message AccessMemory {
+  repeated MemoryAccess mOpsMemory  = 1;
+  repeated int32 translations       = 2;
+}
+
+message WriteBack {
+  required fixed64        NextPC        = 1;
+  required fixed32        NextPstate    = 2;
+  repeated RegisterUpdate destRegsGP    = 3;
+  repeated RegisterUpdate destRegsSys   = 4;
+  repeated SimdReg        destRegsASIMD = 5;
+  optional fixed32        NextFPSR      = 6;
+}
+
+message Retire {
+}
+
+message Packet {
+  required fixed64       Clock       = 1;
+  required fixed64       PC          = 2;
+  required fixed32       Pstate      = 3;
+
+  required int32         Goal        = 4; //<---what is this???
+
+  required int32         State       = 5; //<---what phase did instruction get to?
+
+  optional Fetch         fetch       = 6;
+  optional Decode        decode      = 7;
+  optional FetchOperands read_ops    = 8;
+  optional Execute       exec        = 9;
+  optional AccessMemory  mem_ops     = 10;
+  optional WriteBack     write_ops   = 11;
+  optional Retire        retire      = 12;
+
+  optional Exception     excep       = 13;
+
+  optional string        disassembly = 14;
+  optional string        instr_group = 15;  
+
+  optional bool          waiting     = 16;  
+}
+
+message MemoryAccess {
+  required fixed64          address           = 1;
+  required int32            size              = 2;
+  required string           type              = 3;
+  required bool             exclusive         = 4;
+  required string           direction         = 5;
+  required string           endianness        = 6;
+  required int32            word_size         = 7;
+  required bool             sign_extend       = 8;
+  required bool             paired            = 9;
+  required bool             privileged        = 10;
+  required bytes            membuffer         = 11;
+  required bool             exclusive_passed  = 12;
+  optional ExclusiveMonitor global_monitor    = 13; // (duplicated) exclusive monitor
+  optional ExclusiveMonitor local_monitor     = 14; //  info here in case of exclusive op
+}
+
+message ExclusiveMonitor {
+  required fixed64 la        = 1;   // logical address
+  required fixed64 pa        = 2;   // physical address
+  required int32   cpu_id    = 3;   // which cpu
+  required int32   elem_size = 4;   // access size
+  required bool    exclusive = 5;   // true if exclusive
+}
+  
+// MemoryAccessDebug - used by simulation monitor
+
+message MemoryAccessDebug {
+  required int32   cpu_id          = 1;   // which cpu
+  required fixed64 LA              = 2;   // logical address
+  required fixed64 PA              = 3;   // physical address
+  required bool    is_data         = 4;   // true for data, false for instr
+  required bool    is_write        = 5;   // true for write, false for read
+  required bool    is_init         = 6;   // true if memory is to be initialized
+  required int32   number_of_bytes = 7;   // length
+  required bytes   memblock        = 8;   // the data
+}
+
+message Translation {
+  required fixed64 LA                         = 1; 
+  required fixed32 ASID                       = 2;
+  optional bool    Global                     = 3; 
+  required bool    NS                         = 4;
+  required bool    is_data                    = 5;
+  required bool    is_write                   = 6;
+  optional int32   valid                      = 7;
+  required bool    mmu_enabled                = 8;
+  required bool    secondstage                = 9;
+  required bool    permissioncheck            = 10;
+  optional bool    addressExtended            = 11;
+  required bool    wasaligned                 = 12;
+  required int32   size                       = 13;
+  required bool    privileged                 = 14;
+  optional fixed64 extLA                      = 15;
+  required fixed64 IPA                        = 16;
+  required fixed64 PA                         = 17;
+  optional bool    BigEndian                  = 18;
+  required int32   topBit                     = 19;
+  optional bool    s1_enabled                 = 20;
+  optional bool    s2_enabled                 = 21;
+  optional fixed64 ttb_base_address           = 22;
+  optional bool    tbi                        = 23;
+  required bool    readUnprivileged           = 24;
+  required bool    writeUnprivileged          = 25;
+  required bool    readPrivileged             = 26;
+  required bool    writePrivileged            = 27;
+  required bool    XN                         = 28;
+  required bool    PXN                        = 29;
+  optional bool    Contiguous                 = 30;
+  optional bool    nG                         = 31;
+  optional bool    AF                         = 32;
+  required int32   memory_type                = 33;
+  required int32   device_type                = 34;
+  required int32   outer_cache_type           = 35;
+  required bool    outer_transient            = 36;
+  required bool    outer_read_allocate        = 37;
+  required bool    outer_write_allocate       = 38;
+  required int32   inner_cache_type           = 39;
+  required bool    inner_transient            = 40;
+  required bool    inner_read_allocate        = 41;
+  required bool    inner_write_allocate       = 42;
+  required bool    innershareable             = 43;
+  required bool    outershareable             = 44;
+  optional int32   domain                     = 45;
+  required int32   level                      = 46;
+  optional int32   blocksize                  = 47;
+  optional bool    unpredictable              = 48;
+  optional int32   levels                     = 49;
+  required fixed64 base_address               = 50;
+  required fixed64 page_offset_mask           = 51;
+
+  repeated A64Descriptor descriptors = 52;
+}
+
+message A64Descriptor {
+  required fixed64  address          = 1;
+  required bool     big_endian       = 2;
+  required uint32   level            = 3;
+  required uint32   format           = 4;
+  required uint32   NSTable          = 5;
+  required uint32   APTable          = 6;
+  required uint32   UXNTable         = 7;
+  required uint32   PXNTable         = 8;
+  required uint32   Contiguous       = 9;
+  required uint32   nG               = 10;
+  required uint32   AF               = 11;
+  required uint32   SH               = 12;
+  required uint32   AP               = 13;
+  required uint32   NS               = 14;
+  required uint32   AttrIndx         = 15;
+  required fixed64  page_offset_mask = 16;
+  required fixed64  output_address   = 17;
+  required fixed64  table_address    = 18;
+  required fixed64  dval             = 19;
+
+  required bytes dbuf = 20;
+}
+
+message GPRegister {
+  required uint32  key = 1;
+  required fixed64 val = 2;
+}
+
+// DEFINE ENUMS TO REPLACE STRINGS!!!...  
+
+message RegisterUpdate {
+  required string  key = 1;
+  required fixed64 val = 2;
+}
+  
+// DEFINE ENUMS TO REPLACE STRINGS!!!...  
+
+message InstrField {
+  required string key = 1;
+  required uint32 val = 2;
+}
+
+message SimdReg {
+  required uint32  key             = 1;
+  optional fixed64 rval_hi         = 2;
+  optional fixed64 rval_lo         = 3;
+  optional string  rval_hi_decoded = 4;
+  optional string  rval_lo_decoded = 5;  
+}
+
+
+// mp simulation trace summary related messages...
+
+message TraceInstr {
+  required int32  core   = 1;
+  required uint64 addr   = 2;
+  required int32  block  = 3;
+  optional string disasm = 4;
+}
+
+message TraceIter {
+  required uint64     clock  = 1;
+  repeated TraceInstr instrs = 2;
+}
+
+message TraceSummary {
+  required int32     num_cores   = 1;
+  required int32     num_blocks  = 2;
+  required int32     num_instrs  = 3;
+  repeated string    block_files = 4;
+  repeated TraceIter trace       = 5;
+}
+
+
+// mp simulation history relates messages...
+
+message Period {
+  required uint64 start_time = 1;
+  required uint64 end_time   = 2;
+  required string block_file = 3;
+}
+
+message TraceHistory {
+  required int32  num_cores  = 1;
+  required int32  num_blocks = 2;
+  required int32  num_instrs = 3;
+  repeated Period epochs     = 4;
+}

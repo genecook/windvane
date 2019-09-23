@@ -1,0 +1,55 @@
+#----------------------------------------------------------------------------------------------
+# derived code targets...
+#----------------------------------------------------------------------------------------------
+
+TARGETS := derived/v8asm_starter.txt derived/v8asm_starter_raw.txt derived/v8_sregs_decode.C derived/v8_sregs_map_entries.C \
+           derived/a64_instr_decode.C derived/a64_instr_exec.C derived/a64_instr_enums.h derived/a64_instr_names.C \
+           derived/a64_instr_enum_names.C derived/test_a64sim_utils.C derived/disasm_include_code.C derived/fetch_ops_code.C \
+           derived/writeback_ops_code.C derived/exception_codes.txt derived/a64sim_exceptions_inits.h derived/a64sim_inits.h \
+           derived/a64sim.ini.C derived/a64sim_exceptions.ini.C derived/VFP_CASES.C derived/SIMD_CASES.C
+
+all: $(TARGETS)
+	echo All derived files up to date.
+clean:
+	rm -rf $(TARGETS)
+
+
+derived/v8asm_starter.txt: derived/v8asm_starter_raw.txt utils/fixup_v8asm_starter.pl
+	cat derived/v8asm_starter_raw.txt | utils/fixup_v8asm_starter.pl >derived/v8asm_starter.txt
+
+derived/v8asm_starter_raw.txt: docs/v8_arm_arm.txt utils/id_sections.pl
+	cat docs/v8_arm_arm.txt | utils/id_sections.pl 1>derived/v8asm_starter_raw.txt
+
+check_v8asm_starter:
+	utils/reconcile_enums.pl
+
+
+derived/v8_sregs_decode.C derived/v8_sregs_map_entries.C: docs/v8_sys_regs.txt utils/make_sregs_lookup.pl
+	cat docs/v8_sys_regs.txt | utils/make_sregs_lookup.pl
+
+# NOTE: test_a64sim_utils_debug.C - HAND-EDITED VERSION TO USE DURING DEBUG
+
+derived/a64_instr_decode.C derived/a64_instr_exec.C derived/a64_instr_enums.h derived/a64_instr_names.C derived/a64_instr_enum_names.C \
+  derived/test_a64sim_utils.C: docs/a64.encodings.txt utils/build_instr_rom.pl
+	cat docs/a64.encodings.txt | utils/build_instr_rom.pl
+	#cp derived/test_a64sim_utils_debug.C derived/test_a64sim_utils.C
+
+derived/VFP_CASES.C derived/SIMD_CASES.C: derived/a64_instr_enums.h utils/simd_vs_float_exec_cases.pl
+	cd derived;cat a64_instr_enums.h | ../utils/simd_vs_float_exec_cases.pl
+
+derived/disasm_include_code.C derived/fetch_ops_code.C derived/writeback_ops_code.C: utils/gen_disasm.pl derived/v8asm_starter.txt
+	utils/gen_disasm.pl
+
+derived/exception_codes.txt: docs/v8_arm_arm.txt utils/exception_codes.pl
+	cat docs/v8_arm_arm.txt | utils/exception_codes.pl >derived/exception_codes.txt
+
+derived/a64sim_exceptions_inits.h derived/a64sim_inits.h: setup/a64sim_exceptions.ini setup/a64sim.ini utils/ini2xml
+	cat setup/a64sim_exceptions.ini | utils/ini2xml A64SIM_EXCEPTIONS > derived/a64sim_exceptions_inits.h
+	cat setup/a64sim.ini | utils/ini2xml A64SIM > derived/a64sim_inits.h
+
+derived/a64sim.ini.C derived/a64sim_exceptions.ini.C: setup/a64sim.ini setup/a64sim_exceptions.ini utils/make_personality.pl
+	utils/make_personality.pl setup/a64sim.ini > derived/a64sim.ini.C
+	utils/make_personality.pl setup/a64sim_exceptions.ini > derived/a64sim_exceptions.ini.C
+
+utils/ini2xml: utils/ini2xml.C
+	g++ -std=c++11 -o utils/ini2xml utils/ini2xml.C

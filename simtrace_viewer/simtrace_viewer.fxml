@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.control.cell.*?> 
+<?import javafx.collections.*?> 
+<?import javafx.stage.control.cell.*?> 
+
+<?import simtrace_viewer.RegisterView?>
+<?import simtrace_viewer.InstrView?>
+<?import simtrace_viewer.MemoryView?>
+<?import simtrace_viewer.TranslationView?>
+
+<VBox xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="simtrace_viewer.SimTraceController" stylesheets="@css/simtrace.css">
+    <MenuBar fx:id="menuBar">
+    <menus>
+      <Menu text="File">
+        <items>
+          <MenuItem text="Open" onAction="#loadTrace"/>
+          <MenuItem text="Exit" onAction="#doExit"/>
+        </items>
+      </Menu>
+      <Menu text="Help">
+        <items>
+          <MenuItem text="Search" disable="true" visible="false"/>
+          <MenuItem text="Online Manual" visible="false"/>
+          <SeparatorMenuItem/>
+          <MenuItem text="About" onAction="#doAbout"/>
+        </items>
+      </Menu>
+    </menus>
+    </MenuBar>
+
+    <children>
+      
+<BorderPane>
+ 
+    <padding>
+        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+    </padding>
+
+
+    <top>
+      <BorderPane>
+        <padding>
+          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+        </padding>
+        <left>
+          <GridPane>
+            <Label text="Trace-File:" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <TextField fx:id="MyTrace" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+	    
+	    <!--
+            <Button fx:id="MyButton" mnemonicParsing="false" onAction="#loadTrace" text="Select" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+            -->
+	    
+            <Label text="Core:" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <TextField fx:id="MyCore" promptText="0" text="0" editable="true" GridPane.columnIndex="2" GridPane.rowIndex="2" onAction="#updateCoreNum" />
+
+            <Label text="Block:" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <TextField fx:id="MyBlock" promptText="0" text="0" editable="true" GridPane.columnIndex="2" GridPane.rowIndex="3" onAction="#updateBlockNum" />
+
+            <Label text="Instance:" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+            <TextField fx:id="MyInstrCount" onAction="#updateInstrCount" promptText="1" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+
+            <Label text="PC:" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+            <TextField fx:id="MyPC" GridPane.columnIndex="2" GridPane.rowIndex="5" onAction="#updateInstrPC" />
+
+            <Label text="Pstate:" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+            <TextField fx:id="MyPstate" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+
+            <Label text="Clock:" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+            <TextField fx:id="MyClock" GridPane.columnIndex="2" GridPane.rowIndex="7" onAction="#updateInstrClock" />
+
+            <Label text="Disassembly:" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+            <TextField fx:id="MyDisassembly" GridPane.columnIndex="2" GridPane.rowIndex="8" GridPane.columnSpan="3" />
+          </GridPane>
+        </left>
+        <right>
+          <GridPane>
+             <ImageView visible="true" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                <image>
+                    <Image url="@images/logo.png" />
+                </image>
+             </ImageView>
+             <Label text="Copyright 2017, Tuleta Software Co. All rights reserved." GridPane.columnIndex="1" GridPane.rowIndex="5" />
+          </GridPane>
+        </right>
+      </BorderPane>
+    </top>
+
+    <left>
+       <VBox>
+       <children>
+       <Label text="Instruction trace:"/>
+       <ListView fx:id="listBoxMain" onMouseClicked="#handleMouseClick" prefWidth="350.0" prefHeight="800.0">
+          <items>
+            <FXCollections fx:factory="observableArrayList">
+              <String fx:value=""/>
+            </FXCollections>
+          </items>
+       </ListView>
+       </children>
+       </VBox>
+    </left>
+
+    <center>
+
+      <TabPane prefHeight="200.0">
+         <padding>
+            <Insets left="10.0" right="10.0" />
+         </padding>
+      <tabs>
+      <Tab text="Execution Trace">
+
+           <TableView fx:id="tableView" onMouseClicked="#handleTVMouseClick">
+               <columns>
+                 <TableColumn text="Item" minWidth="160"><cellValueFactory><PropertyValueFactory property="Heading" /></cellValueFactory></TableColumn>
+                 <TableColumn text="FETCH"><cellValueFactory><PropertyValueFactory property="Fetch" /></cellValueFactory></TableColumn>
+                 <TableColumn text="DECODE"><cellValueFactory><PropertyValueFactory property="Decode" /></cellValueFactory></TableColumn>
+                 <TableColumn text="FETCH OPERANDS"><cellValueFactory><PropertyValueFactory property="FetchOperands" /></cellValueFactory></TableColumn>
+                 <TableColumn text="EXECUTE"><cellValueFactory><PropertyValueFactory property="Execute" /></cellValueFactory></TableColumn>
+                 <TableColumn text="ACCESS MEMORY"><cellValueFactory><PropertyValueFactory property="AccessMemory" /></cellValueFactory></TableColumn>
+                 <TableColumn text="WRITEBACK"><cellValueFactory><PropertyValueFactory property="Writeback" /></cellValueFactory></TableColumn>
+                 <TableColumn text="RETIRE"><cellValueFactory><PropertyValueFactory property="Retire" /></cellValueFactory></TableColumn>
+               </columns>
+               <items>
+                  <FXCollections fx:factory="observableArrayList">
+                     <InstrView Heading="" Fetch="" Decode="" FetchOperands="" Execute="" AccessMemory="" Writeback="" Retire=""  />
+                  </FXCollections>
+               </items>
+           </TableView>
+	   
+      </Tab>
+      <Tab text="Translations">
+	
+           <TableView fx:id="translationsTableView">
+             <columns>
+	       <!-- inputs -->
+                <TableColumn text="LA" fx:id="trLA"><cellValueFactory><PropertyValueFactory property="LA" /></cellValueFactory></TableColumn>
+                <TableColumn text="Global"><cellValueFactory><PropertyValueFactory property="Global" /></cellValueFactory></TableColumn>
+                <TableColumn text="ASID"><cellValueFactory><PropertyValueFactory property="ASID" /></cellValueFactory></TableColumn>
+                <TableColumn text="NS"><cellValueFactory><PropertyValueFactory property="NS" /></cellValueFactory></TableColumn>
+                <TableColumn text="Access Type"><cellValueFactory><PropertyValueFactory property="Data" /></cellValueFactory></TableColumn>
+                <TableColumn text="Data Type"><cellValueFactory><PropertyValueFactory property="Write" /></cellValueFactory></TableColumn>
+                <TableColumn text="Aligned?"><cellValueFactory><PropertyValueFactory property="Aligned" /></cellValueFactory></TableColumn>
+                <TableColumn text="size"><cellValueFactory><PropertyValueFactory property="Size" /></cellValueFactory></TableColumn>
+                <TableColumn text="Privileged?"><cellValueFactory><PropertyValueFactory property="Privileged" /></cellValueFactory></TableColumn>
+
+		<!-- outputs -->
+		<TableColumn text="PA"><cellValueFactory><PropertyValueFactory property="PA" /></cellValueFactory></TableColumn>
+
+                <TableColumn text="Top Bit Index"><cellValueFactory><PropertyValueFactory property="TopBit" /></cellValueFactory></TableColumn>
+                <TableColumn text="TBI"><cellValueFactory><PropertyValueFactory property="TBI" /></cellValueFactory></TableColumn>
+
+                <TableColumn text="Access Rights">
+		  <columns>
+		    <TableColumn text="Unprivileged">
+		      <columns>
+                       <TableColumn text="Read"><cellValueFactory><PropertyValueFactory property="ReadUnprivileged" /></cellValueFactory></TableColumn>
+                       <TableColumn text="Write"><cellValueFactory><PropertyValueFactory property="WriteUnprivileged" /></cellValueFactory></TableColumn>
+		      </columns>
+		    </TableColumn>
+		    <TableColumn text="Privileged">
+		      <columns>
+                       <TableColumn text="Read"><cellValueFactory><PropertyValueFactory property="ReadPrivileged" /></cellValueFactory></TableColumn>
+                       <TableColumn text="Write"><cellValueFactory><PropertyValueFactory property="WritePrivileged" /></cellValueFactory></TableColumn>
+		     </columns>
+		    </TableColumn>
+                   </columns>
+		</TableColumn>
+
+                <TableColumn text="XN"><cellValueFactory><PropertyValueFactory property="XN" /></cellValueFactory></TableColumn>
+                <TableColumn text="PXN"><cellValueFactory><PropertyValueFactory property="PXN" /></cellValueFactory></TableColumn>
+
+                <TableColumn text="Memory Type"><cellValueFactory><PropertyValueFactory property="MemoryType" /></cellValueFactory></TableColumn>
+                <TableColumn text="Device Type"><cellValueFactory><PropertyValueFactory property="DeviceType" /></cellValueFactory></TableColumn>
+
+		<TableColumn text="Cache Attributes">
+		  <columns>
+		    <TableColumn text="Outer">
+		      <columns>
+                         <TableColumn text="Type"><cellValueFactory><PropertyValueFactory property="OuterCacheType" /></cellValueFactory></TableColumn>
+                         <TableColumn text="Transient"><cellValueFactory><PropertyValueFactory property="OuterTransient" /></cellValueFactory></TableColumn>
+                         <TableColumn text="Read allocate"><cellValueFactory><PropertyValueFactory property="OuterReadAllocate" /></cellValueFactory></TableColumn>
+                         <TableColumn text="Write allocate"><cellValueFactory><PropertyValueFactory property="OuterWriteAllocate" /></cellValueFactory></TableColumn>
+                         <TableColumn text="Shareable"><cellValueFactory><PropertyValueFactory property="OuterShareable" /></cellValueFactory></TableColumn>
+		      </columns>
+		    </TableColumn> 
+                    <TableColumn text="Inner">
+		      <columns>
+                        <TableColumn text="Type"><cellValueFactory><PropertyValueFactory property="InnerCacheType" /></cellValueFactory></TableColumn>
+                        <TableColumn text="Transient"><cellValueFactory><PropertyValueFactory property="InnerTransient" /></cellValueFactory></TableColumn>
+                        <TableColumn text="Read allocate"><cellValueFactory><PropertyValueFactory property="InnerReadAllocate" /></cellValueFactory></TableColumn>
+                        <TableColumn text="Write allocate"><cellValueFactory><PropertyValueFactory property="InnerWriteAllocate" /></cellValueFactory></TableColumn>
+                        <TableColumn text="Shareable"><cellValueFactory><PropertyValueFactory property="InnerShareable" /></cellValueFactory></TableColumn>
+ 		      </columns>
+		    </TableColumn>
+		  </columns>
+ 		</TableColumn>
+		
+		<!-- mmu on -->
+		<TableColumn text="VMSA Specific">
+		  <columns>
+                    <TableColumn text="VMSA enabled"><cellValueFactory><PropertyValueFactory property="MMUEnabled" /></cellValueFactory></TableColumn>
+                    <TableColumn text="Permission Checks?"><cellValueFactory><PropertyValueFactory property="PermissionCheck" /></cellValueFactory></TableColumn>
+                    <TableColumn text="Address extended?"><cellValueFactory><PropertyValueFactory property="AddressExtended" /></cellValueFactory></TableColumn>
+                    <TableColumn text="Extended LA"><cellValueFactory><PropertyValueFactory property="ExtendedLA" /></cellValueFactory></TableColumn>
+                    <TableColumn text="IPA"><cellValueFactory><PropertyValueFactory property="IPA" /></cellValueFactory></TableColumn>
+                    <TableColumn text="Big Endian?"><cellValueFactory><PropertyValueFactory property="BigEndian" /></cellValueFactory></TableColumn>
+                    <TableColumn text="TTB base address"><cellValueFactory><PropertyValueFactory property="TTBBaseAddress" /></cellValueFactory></TableColumn>		
+                    <TableColumn text="Contiguous"><cellValueFactory><PropertyValueFactory property="Contiguous" /></cellValueFactory></TableColumn>
+		    <TableColumn text="nG"><cellValueFactory><PropertyValueFactory property="NG" /></cellValueFactory></TableColumn>
+                    <TableColumn text="AF"><cellValueFactory><PropertyValueFactory property="AF" /></cellValueFactory></TableColumn>
+                    <TableColumn text="Domain"><cellValueFactory><PropertyValueFactory property="Domain" /></cellValueFactory></TableColumn>
+                    <TableColumn text="BlockSize"><cellValueFactory><PropertyValueFactory property="BlockSize" /></cellValueFactory></TableColumn>
+                    <TableColumn text="Levels"><cellValueFactory><PropertyValueFactory property="Levels" /></cellValueFactory></TableColumn>
+                    <TableColumn text="Base Address"><cellValueFactory><PropertyValueFactory property="BaseAddress" /></cellValueFactory></TableColumn>
+                    <TableColumn text="Page offset mask"><cellValueFactory><PropertyValueFactory property="PageOffsetMask" /></cellValueFactory></TableColumn>
+		  </columns>
+ 		</TableColumn>
+		
+              </columns>
+
+	      <items>
+                  <FXCollections fx:factory="observableArrayList">
+                    <TranslationView />
+                  </FXCollections>
+              </items>
+
+           </TableView>
+	
+	 </Tab>
+	 
+         <Tab text="Memory">
+           <TableView fx:id="memoryTableView">
+             <columns>
+	       <!-- inputs -->
+                <TableColumn text="Address" fx:id="memAaddr"><cellValueFactory><PropertyValueFactory property="ADDR" /></cellValueFactory></TableColumn>
+                <TableColumn text="Data"><cellValueFactory><PropertyValueFactory property="DATA" /></cellValueFactory></TableColumn>
+             </columns>
+             <items>
+                 <FXCollections fx:factory="observableArrayList"> 
+                     <MemoryView ADDR="" DATA=""/>
+                 </FXCollections>
+             </items>
+           </TableView>
+         </Tab>
+         </tabs>
+       </TabPane>
+      
+    </center>
+
+    <bottom>
+        <TabPane prefHeight="300.0">
+            <padding>
+               <Insets bottom="10.0" left="5.0" right="10.0" top="10.0" />
+            </padding>
+            <tabs>
+                <Tab text="Application Registers">
+                    <TableView fx:id="cpuBaseRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="Configuration Registers">
+                    <TableView fx:id="cpuConfigRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="ProcID Registers">
+                    <TableView fx:id="cpuProcidRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="FPU Registers">
+                    <TableView fx:id="cpuFpuRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="Debug Registers">
+                    <TableView fx:id="cpuDebugRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="Exception State Registers">
+                    <TableView fx:id="cpuExcepRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="VMSA Registers">
+                    <TableView fx:id="cpuVmsaRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="Reset Mgmt Registers">
+                    <TableView fx:id="cpuResetRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+		
+                <Tab text="Thread Registers">
+                    <TableView fx:id="cpuThreadRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="GICC Registers">
+                    <TableView fx:id="cpuGiccRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+                <Tab text="Timer Registers">
+                    <TableView fx:id="cpuTimerRegisters">
+                       <columns>
+                         <TableColumn text="Register">
+                            <cellValueFactory><PropertyValueFactory property="Name" /></cellValueFactory>
+                         </TableColumn>
+                         <TableColumn text="Value">
+                            <cellValueFactory><PropertyValueFactory property="Value" /></cellValueFactory>
+                         </TableColumn>
+                       </columns>
+		    <items>
+                       <FXCollections fx:factory="observableArrayList"> 
+                          <RegisterView Name="" Value=""/>
+                       </FXCollections>
+                    </items>
+                    </TableView>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </bottom>
+
+</BorderPane>
+</children>
+</VBox>
