@@ -1,31 +1,3 @@
-a64 simulator + simulation-trace gui 'base code':
-
-  bin
-  boot_code
-  depends
-  derived
-  docs
-  include
-  lib
-  Makefile
-  Makefile.derived
-  Makefile.inc
-  obj
-  proto
-  README
-  setup
-  simtrace_viewer
-  src
-  utils
-
-To build:
-
-  cd proto; make
-  make
-  cd simtrace_viewer; make
-
-To test:
-  make test    # generates/checks a single test.
-
-  cd simtrace_viewer; make test   # invoke GUI. use to load rndcode_test simulation trace.
-  
+project: windvane - arm64 simulator, simulation-trace viewer
+status: beta
+use rights: see docs/LICENSE
