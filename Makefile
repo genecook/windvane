@@ -50,7 +50,7 @@ all: bin/a64sim lib/liba64simUserSpace.so lib/libsimX.a lib/libsimXutils.a bin/s
 # a64Sim - mp-enabled simulator wrapper, class + main...
 
 bin/a64sim:  src/X64Sim.C lib/libsimD.a
-	g++ $(CFLAGS) -o $@ $< $(PROTOLIBDIRS) $(LIBDIRS) -lsimD -ldl ${STATIC_BOOSTLIB} ${STATIC_PROTOLIB} ${STATIC_LIBELF}
+	g++ $(CFLAGS) -o $@ $< $(PROTOLIBDIRS) $(LIBDIRS) -lsimD -ldl ${STATIC_BOOSTLIB} ${STATIC_PROTOLIB} ${STATIC_LIBELF} ${LDFLAGS}
 
 # test - generate/resimulate a single test:
 #    rndcode_test - four cores, 1k instrs max per core, boots at el3 but generates/executes random instructions at el0.
@@ -106,7 +106,7 @@ bin/show_memtrace_summary: src/show_memtrace_summary.C lib/libsimD.a
 
 # libsimD.a - static linked version of simulator + scaffold. C++ scaffold/simulator 'interface'...
 
-lib/libsimD.a: $(SIM_OBJS) $(VFP_OBJS) $(ELFIO_C_CODE) proto/scaffold.o obj/SimTrace.o ${PBJSON}/src/pbjson.o 
+lib/libsimD.a: $(SIM_OBJS) $(VFP_OBJS) $(ELFIO_C_CODE) proto/scaffold.o obj/SimTrace.o
 	ar rvs lib/libsimD.a $^
 
 lib/libRSP.o: obj/RSP.o
@@ -163,7 +163,7 @@ obj/elfio.o: src/elfio.c
 
 clean:
 	rm -f depends/*.d bin/a64sim bin/show_memtrace bin/show_memtrace_summary bin/show_sim_monitor_trace \
-           bin/show_simtrace bin/show_simtrace_history lib/*.a lib/*.so obj/*.o rndcode_test.* tlog* \
+           bin/show_simtrace bin/show_simtrace_history lib/*.a lib/*.so obj/*.o rndcode_test.* tlog* core* \
 	make clean_utils
 
 include $(SIM_DEPS)

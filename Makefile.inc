@@ -8,28 +8,31 @@ AR = /usr/bin/ar
 
 # paths, etc, used by main Makefile...
 
-PBJSON := ${HOME}/Downloads/pbjson-master
+TOOLS_DIR := ${HOME}/Desktop/tools
 
-HALF_PRECISION := ${HOME}/Downloads/half-1.11.0
 
-MY_LIBELF := ${HOME}/Downloads/elftoolchain-0.7.1
+PBJSON := ${TOOLS_DIR}/pbjson
+
+HALF_PRECISION := ${TOOLS_DIR}/half-2.1.0
+
+MY_LIBELF := ${TOOLS_DIR}/elftoolchain-0.7.1
 
 STATIC_LIBELF := ${MY_LIBELF}/libelf/libelf.a
 
 LIBELF_INCLUDES := -I${MY_LIBELF}/libelf -I${MY_LIBELF}/common
 
-STATIC_BOOSTLIB := /usr/local/lib/libboost_program_options.a
+STATIC_BOOSTLIB := ${TOOLS_DIR}/lib/libboost_program_options.a
 
-PROTOLIBDIRS := -L/usr/local/lib
+BOOST_INCLUDES := -I${TOOLS_DIR}/include
 
-STATIC_PROTOLIB := /usr/local/lib/libprotobuf.a
+STATIC_PROTOLIB := /usr/lib/x86_64-linux-gnu/libprotobuf.a
 
 
 # 'core' cflags - common to all src compiles...
-CORE_CFLAGS := -Iinclude -std=c++11 -Wall -Werror -Wno-unknown-pragmas -O2
+CORE_CFLAGS := -Iinclude -std=c++11 -Wall -Werror -Wno-unknown-pragmas -g
 
 # cflags - include derived include files, protocol-buffer include files, json includes...
-CFLAGS := ${LIBELF_INCLUDES} -Iderived -I./proto ${CORE_CFLAGS} -I${PBJSON}/src 
+CFLAGS := -I/usr/include ${LIBELF_INCLUDES} ${BOOST_INCLUDES} -Iderived -I./proto ${CORE_CFLAGS} 
 
 CPPFLAGS = $(CFLAGS)
 
@@ -40,3 +43,4 @@ HALF_VFP_CFLAGS := $(CORE_CFLAGS) -I$(HALF_PRECISION)/include
 
 LIBDIRS := -L/usr/lib/x86_64-linux-gnu -L./lib
 
+LDFLAGS += -pthread -Wl,--no-as-needed
