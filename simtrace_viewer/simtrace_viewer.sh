@@ -1,42 +1,40 @@
 #!/bin/sh -f
 
-#---------------------------------------------------------------------------------------
-# simtrace_viewer.sh
-#
-#    shell script wrapper for a64 simulator trace viewer.
-#
-# locate java executable via JAVA_HOME if set
-# else see if java executable is found and if so use that
-# else check linux java install directory /usr/lib/jvm/default-java
-# 
-# Need Java version 1.8 or greater.
-#---------------------------------------------------------------------------------------
+echo "\nStarting up simulation-trace viewer tool...\n"
 
-export STV_HOME=`/usr/bin/dirname $0`
-export STV_JAR=$STV_HOME/stv.jar
-
-if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ];  then
-    echo found java executable in $JAVA_HOME     
-    _java="$JAVA_HOME/bin/java"
-elif [ -p java ]; then
-    echo found java executable in PATH
-    _java=java
-elif [ -x "/usr/lib/jvm/default-java/bin/java" ];  then
-    echo "no java, will ASSUME JAVA_HOME is /usr/lib/jvm/default-java..."
-    export JAVA_HOME=/usr/lib/jvm/default-java
-    _java="$JAVA_HOME/bin/java"
+if [ -n "$JAVA_HOME" ]; then
+    echo JAVA_HOME already set to: $JAVA_HOME
 else
-    echo "No java executable found, cannot continue. Need Java version 1.8 or greater."
+    JAVA_HOME=~/Desktop/tools/jdk-13
+    echo Assuming JAVA_HOME is: $JAVA_HOME
 fi
 
-if [ "$_java" ]; then
-    version=$("$_java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
-    echo version "$version"
-    if [ "$version" > "1.7" ]; then
-        echo Java version checks out. Starting viewer...
-        ${_java} -jar ${STV_JAR} $*
-    else         
-        echo Java version is less than 1.8. Cannot continue.
-    fi
+if [ -n "$JAVAFX_HOME" ]; then
+    echo JAVAFX_HOME already set to: $JAVAFX_HOME
+else
+    JAVAFX_HOME=~/Desktop/tools/javafx-sdk-13
+    echo Assuming JAVAFX_HOME is: $JAVAFX_HOME
 fi
+
+SCRIPT=`realpath $0`
+SCRIPTPATH=`dirname $SCRIPT`
+
+if [ -f './stv.jar' ]; then
+    echo "Found simtrace-viewer jar file (stv.jar) in current directory. Will ASSUME its current..."
+    STV_HOME='.'
+else
+    echo "Assuming simtrace-viewer jar-file is located in same directory as this script..."
+    STV_HOME=$SCRIPTPATH
+fi
+
+JDK_MODULES=javafx.base,javafx.controls,javafx.fxml,javafx.graphics
+
+if [ -f $STV_HOME/stv.jar ]; then
+    $JAVA_HOME/bin/java --module-path $STV_HOME:$JAVAFX_HOME/lib --add-modules stv,$JDK_MODULES simtrace_viewer.Main
+else
+    echo "simtrace-viewer jar file ($STV_HOME/stv.jar) not found."
+fi
+
+
+
 

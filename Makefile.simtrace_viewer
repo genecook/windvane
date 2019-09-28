@@ -1,0 +1,22 @@
+include simtrace_viewer/Makefile.inc
+
+all: stv.jar
+	@echo simtrace-viewer GUI ready to go.
+
+stv.jar: simtrace_viewer/simtrace_viewer.jar 
+	rm -rf tmpdir; mkdir tmpdir
+	cd tmpdir;${JDK_HOME}/bin/jar -xf ../simtrace_viewer/simtrace_viewer.jar
+	cd tmpdir;${JDK_HOME}/bin/jar -xf ${PROTO_JAR}
+	${JDK_HOME}/bin/jar -cvfm stv.jar simtrace_viewer/SimTraceViewer.mf -C tmpdir .
+
+install: stv.jar
+	cp stv.jar bin
+	cp simtrace_viewer/simtrace_viewer.sh bin
+	
+simtrace_viewer/simtrace_viewer.jar:
+	cd simtrace_viewer; make simtrace_viewer.jar
+
+clean:
+	rm -rf *.jar tmpdir
+
+	
