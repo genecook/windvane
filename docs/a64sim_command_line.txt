@@ -2,8 +2,8 @@ a64sim
 ======
 :Author:    Tuleta Software Co.
 :Email:     <gene@tuletasoftware.com>
-:Date:      10/5/2017
-:Revision:  1.0-alpha
+:Date:      9/30/2019
+:Revision:  alpha
 
 Introduction
 ------------
@@ -23,7 +23,7 @@ printed:
 .*a64sim* Help
 ----
 gene@gene-MS-7850:$ ./bin/a64sim --help
-A64simulator/MP - Tuleta Software Co. Copyright 2017. All rights reserved.
+A64simulator/MP - Tuleta Software Co. Copyright 2019. All rights reserved.
 
     command line options:
         --help (or -h)                          -- print this help message.
@@ -61,9 +61,9 @@ Type 'a64sim --version' to view the tool version...
 .*a64sim* Version Information
 ----
 gene@gene-MS-7850:$ ./bin/a64sim -V
-A64simulator/MP - Tuleta Software Co. Copyright 2017. All rights reserved.
+A64simulator/MP - Tuleta Software Co. Copyright 2018. All rights reserved.
 
-a64sim 1.0 Alpha
+a64sim 1.0.4 Alpha
 gene@gene-MS-7850:$ 
 ----
 
@@ -141,8 +141,9 @@ At this time the assembly language statements produced are not guaranteed to ass
 
 _Semihosting_ command line options
 ----------------------------------
-At present the a64sim simulator has no emulated hardware support for I/O, such as UARTs or graphics frame buffer or keyboard. For convenience, and of course
-to make simulation interesting, support for the _ARM_ semihosting functionality has been include. Via the _semihosting_ interface, calls are provided to
+For convenience, and of course to make simulation interesting, support for the _ARM_ semihosting functionality has been included.
+
+Via the _semihosting_ interface, calls are provided to
 read/write characters and strings to stdout and stdin, or from a file. Calls are also provided to get access to command line parameters. There are also
 calls to obtain the time-of-day and other timer related values. The a64sim simulator supported semihosting calls are documented elsewhere. The a64sim
 command line options related to semihosting are described below...

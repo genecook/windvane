@@ -2,8 +2,8 @@ a64sim
 ======
 :Author:    Tuleta Software Co.
 :Email:     <gene@tuletasoftware.com>
-:Date:      10/5/2017
-:Revision:  1.0-alpha
+:Date:      9/30/2019
+:Revision:  alpha
 
 
 Introduction
@@ -21,33 +21,36 @@ link:a64sim_license.html[License, Copyright Notice - Please read, thanks]
 
 Requirements
 ------------
-The *a64sim* simulator was compiled and linked using gnu g++ version 5.4.0 and Ubuntu Linux version 16.04.4:
+The *a64sim* simulator was compiled and linked using *gnu g++ version 8.3.0* and *Ubuntu Linux version 19.04*:
+
+.Ubuntu version info
+----
+genec@genes-cube:~/Desktop/windvane/docs$ lsb_release -a
+No LSB modules are available.
+Distributor ID:	Ubuntu
+Description:	Ubuntu 19.04
+Release:	19.04
+Codename:	disco
+----
 
 .*a64sim* Build Information
 ----
 gene@gene-MS-7850:~/Desktop/windvane$ g++ --version
-g++ (Ubuntu 5.4.0-6ubuntu1~16.04.4) 5.4.0 20160609
-Copyright (C) 2015 Free Software Foundation, Inc.
+genec@genes-cube:~/Desktop/windvane/docs$ g++ --version
+g++ (Ubuntu 8.3.0-6ubuntu1) 8.3.0
+Copyright (C) 2018 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-gene@gene-MS-7850$ ldd bin/a64sim
-	linux-vdso.so.1 =>  (0x00007ffd21764000)
-	libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f1b877b4000)
-	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f1b874ab000)
-	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f1b87294000)
-	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f1b86ecb000)
-	/lib64/ld-linux-x86-64.so.2 (0x0000564813de8000)
 ----
 
-The *simtrace-viewer* was compiled using Java version 1.8 (Java 8 JRE/JDK including FXML):
+The *simtrace-viewer* was compiled using Java version 13 (Open source jdk-13, javafx-sdk-13):
 
 .*simtrace-viewer* Build Information
 ----
-gene@gene-MS-7850$ ${HOME}/Downloads/jdk1.8.0_112/bin/java -version
-java version "1.8.0_112"
-Java(TM) SE Runtime Environment (build 1.8.0_112-b15)
-Java HotSpot(TM) 64-Bit Server VM (build 25.112-b15, mixed mode)
+genec@genes-cube:~/Desktop/windvane$ ../tools/jdk-13/bin/java --version
+java 13 2019-09-17
+Java(TM) SE Runtime Environment (build 13+33)
+Java HotSpot(TM) 64-Bit Server VM (build 13+33, mixed mode, sharing)
 ----
 
 Additionally, to assemble and/or compile the included examples, the _aarch64_ gnu bin tools were installed
@@ -69,6 +72,7 @@ gene@gene-MS-7850:$ ls /usr/bin/*aarch*
 /usr/bin/aarch64-linux-gnu-gcc        /usr/bin/aarch64-linux-gnu-gprof         /usr/bin/qemu-aarch64-static
 /usr/bin/aarch64-linux-gnu-gcc-5      /usr/bin/aarch64-linux-gnu-ld
 
+
 gene@gene-MS-7850$ /usr/bin/aarch64-linux-gnu-as --version
 GNU assembler (GNU Binutils for Ubuntu) 2.26.1
 Copyright (C) 2015 Free Software Foundation, Inc.
@@ -76,16 +80,12 @@ This program is free software; you may redistribute it under the terms of
 the GNU General Public License version 3 or later.
 This program has absolutely no warranty.
 This assembler was configured for a target of `aarch64-linux-gnu'.
-
-gene@gene-MS-7850$ /usr/bin/aarch64-linux-gnu-g++ --version
-aarch64-linux-gnu-g++ (Ubuntu/Linaro 5.4.0-6ubuntu1~16.04.4) 5.4.0 20160609
-Copyright (C) 2015 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ----
 
 Quick start
 -----------
+*OOPS! THE EXAMPLES DIRECTORY HAS YET TO BE MOVED OVER FROM THE OLD REPOSITORY.*
+
 Assuming you are in the _examples_ directory, _cd_ into the *example1* sub-directory.
 This example consists of a three statement assembly language test (_add_sequence.s_) plus
 a _makefile_ used to build and run the test. To assemble the test, run _make_:

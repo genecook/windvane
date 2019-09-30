@@ -2,8 +2,8 @@ a64sim
 ======
 :Author:    Tuleta Software Co.
 :Email:     <gene@tuletasoftware.com>
-:Date:      9/21/2017
-:Revision:  1.x-alpha
+:Date:      9/30/2019
+:Revision:  alpha
 
 
 Index
