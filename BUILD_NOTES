@@ -1,31 +1,28 @@
-a64 simulator + simulation-trace gui 'base code':
+a64 simulator + simulation-trace GUI 'base code'.
 
-  bin
-  boot_code
-  depends
-  derived
-  docs
-  include
-  lib
-  Makefile
-  Makefile.derived
-  Makefile.inc
-  obj
-  proto
-  README
-  setup
-  simtrace_viewer
-  src
-  utils
+Am slowly migrating the code base onto github. Bear with me.
 
-To build:
+The current build process is:
 
+  # to compile the simulator:
+  
   cd proto; make
   make
+
+  # to compile the 'boot code' (assembly language snippets):
+  
+  cd boot_code; make
+
+  # to build the simulator trace GUI:
+  
   cd simtrace_viewer; make
+
+  # to package up the GUI and 'install' same:
+  
+  make -f simtrace_viewer
 
 To test:
   make test    # generates/checks a single test.
 
-  cd simtrace_viewer; make test   # invoke GUI. use to load rndcode_test simulation trace.
+  bin/simtrace_viewer.sh   # invoke GUI in GUI src dir. use to load rndcode_test simulation trace.
   
