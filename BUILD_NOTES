@@ -4,20 +4,24 @@ Am slowly migrating the code base onto github. Bear with me.
 
 The current build process is:
 
-  # to compile the simulator:
-  
+  # the simulation-trace facility used Google Protol Buffers. Compile this
+  # code first:
+
   cd proto; make
+
+  # Now compile the simulator:
+  
   make
 
-  # to compile the 'boot code' (assembly language snippets):
+  # To compile the 'boot code' (assembly language snippets used in examples, etc):
   
   cd boot_code; make
 
-  # to build the simulator trace GUI:
+  # To build the simulator trace GUI:
   
   cd simtrace_viewer; make
 
-  # to package up the GUI and 'install' same:
+  # To package up the GUI and 'install' same:
   
   make -f simtrace_viewer
 
