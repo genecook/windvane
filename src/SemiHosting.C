@@ -120,15 +120,16 @@ int SemiHosting::SysOpen(char *filename, int mode_index, unsigned long long &fil
     rcode = 0;
   } else { 
     fd = fopen(filename,mode);
-    rcode = (fd != NULL) ? 0 : rcode;
+    rcode = (fd != NULL) ? 0 : -1;
   }
 
   if (fd == NULL) {
     //printf("[SysOpen] failed?\n"); 
   } else {
-     file_no = (unsigned long long) fileno(fd);
+    file_no = (unsigned long long) fileno(fd);
   }
-  
+ 
+  //printf("[SysOpen] rcode: %d\n",rcode); 
   return rcode;
 }
 
