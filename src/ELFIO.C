@@ -235,7 +235,7 @@ int ELFIO::Load(Memory &mem, string &elf_file, unsigned long long load_address, 
 
     // ignore symbol table or string table...
 
-    if (!strncmp(section_name,".symtab",7) || !strncmp(section_name,".strtab",7) || !strncmp(section_name,".shstrtab",9) ) {
+    if (!strncmp(section_name,".symtab",7) || !strncmp(section_name,".strtab",7) || !strncmp(section_name,".shstrtab",9) || !strncmp(section_name,".stab",5) ) {
       if (verbose) printf("Skipping '%s' section...\n",section_name);
       continue;
     }
