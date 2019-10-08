@@ -23,7 +23,7 @@ LIBELF_INCLUDES := -I${MY_LIBELF}/libelf -I${MY_LIBELF}/common
 
 STATIC_BOOSTLIB := ${TOOLS_DIR}/lib/libboost_program_options.a
 
-BOOST_INCLUDES := -I${TOOLS_DIR}/include
+BOOST_INCLUDES := -I${TOOLS_DIR}/boost_1_71_0
 
 STATIC_PROTOLIB := /usr/lib/x86_64-linux-gnu/libprotobuf.a
 

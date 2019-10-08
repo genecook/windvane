@@ -1,3 +1,5 @@
+include Makefile.inc
+
 #----------------------------------------------------------------------------------------------
 # derived code targets...
 #----------------------------------------------------------------------------------------------
@@ -52,4 +54,4 @@ derived/a64sim.ini.C derived/a64sim_exceptions.ini.C: setup/a64sim.ini setup/a64
 	utils/make_personality.pl setup/a64sim_exceptions.ini > derived/a64sim_exceptions.ini.C
 
 utils/ini2xml: utils/ini2xml.C
-	g++ -std=c++11 -o utils/ini2xml utils/ini2xml.C
+	$(GPP) $(CPPFLAGS) -o utils/ini2xml utils/ini2xml.C
