@@ -9,6 +9,10 @@
 #define IGNORE_UPPER_PA_BITS 1
 //#define KERNEL_DEBUG 1
 
+// set to true to cause data accesses to normal memory to be treated as accesses to device memory and thus
+// unaligned data accesses will cause exceptions...
+//#define ENFORCE_DATA_ALIGNMENT_MMU_OFF 1
+
 // the issue with tlbs are that tlb maintenance instructions are not implemented
 // and thus don't really know when to invalidate tlb entries...
 //#define USE_TLB 1
@@ -1041,6 +1045,9 @@ void A64_VMSA::CheckAlignment(Translation *S1) {
   if (S1->is_data && !S1->wasaligned && ( S1->memory_type == DEVICE_MEMORY || AlignmentChecksEnabled() ) ) {
     // alignment fault...
 #ifdef MMU_DEBUG
+    printf("[A64_VMSA::CheckAlignment] aligned? %d, device-memory? %d, data? %d, alignment-checks enabled?: %d, address: 0x%llx\n",
+         S1->wasaligned, (S1->memory_type == DEVICE_MEMORY), S1->is_data, AlignmentChecksEnabled(), S1->LA);
+
     printf("[A64_VMSA::CheckAlignment] DATA-ABORT/ALIGNMENT, ADDRESS: 0x%llx\n",S1->LA);
 #endif
     packet->recordExceptionCondition(DATA_ABORT,ALIGNMENT);
@@ -1171,16 +1178,21 @@ void A64_VMSA::TranslateAddressS1Off(Translation *S1) {
       packet->recordExceptionCondition(S1->is_data ? DATA_ABORT : INSTRUCTION_ABORT);
       throw ARCH_EXCEPTION;
     }
-  } else if (S1->is_data) {
+  }
+#ifdef ENFORCE_DATA_ALIGNMENT_MMU_OFF
+  // arm spec seems to indicate all normal memory treated as device until mmu is enabled and memory types specified...
+  else if (S1->is_data) {
     // data access...
     S1->memory_type      = DEVICE_MEMORY;
     S1->device_type      = DEVICETYPE_nGnRnE;
     S1->inner_cache_type = MEMATTR_UNKNOWN;
     S1->innershareable   = true;  // false???
     S1->outershareable   = true;
-  } else {
+  }
+#endif
+  else {
     // instruction access...
-    bool cacheable = Cacheable(false);
+    bool cacheable = Cacheable(S1->is_data);
     S1->memory_type = NORMAL_MEMORY;
     S1->device_type = DEVICETYPE_UNKNOWN;
     if (cacheable) {
