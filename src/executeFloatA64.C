@@ -340,6 +340,12 @@ bool Control::executeFloatSIMD_inner(unsigned int &multiplier) {
       vfpMove();
       break;
 
+    // ignore simd instrs??? ouch!
+    case SIMD_DUP:
+    case SIMD_UMOV_32:
+    case SIMD_UMOV_64:
+      break;
+      
     // fp load/store ops don't update the flags...
       
     case SIMD_LDP_REG_OFF_8_128: case SIMD_LDP_REG_OFF_32: case SIMD_LDP_REG_OFF_64: case SIMD_LDP_REG_POST_8_128:
