@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "boost/program_options.hpp"
+#include <boost/program_options.hpp>
 
 #include "a64sim.h"
 #include "a64sim_monitor.h"
