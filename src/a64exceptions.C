@@ -7,7 +7,7 @@
 #include "a64_instr_enums.h"
 #include "a64_exceptions.h"
 
-//#define DEBUG_EXCEPTIONS 1
+#define DEBUG_EXCEPTIONS 1
 
 //==========================================================================================
 // ExceptionEnables - user control over which exceptions are enabled/disabled...
@@ -175,7 +175,7 @@ void Control::processException() {
 #ifdef DEBUG_EXCEPTIONS
 		if (packet->exception_type==EXCEPTION_GENERATING_INSTRUCTION)
 		  printf("[Control::processException] EXCEPTION_GENERATING_INSTRUCTION...\n");
-		else 
+		else if ( (packet->exception_type==IRQ) || (packet->exception_type==FIQ) ) 
 		  printf("[Control::processException] ASYNCHRONOUS EXCEPTION, IE, INTERRUPT...\n");
 #endif
 	       
@@ -242,7 +242,11 @@ unsigned long long Control::VBAR(int EL) {
   }
 
   if (!vbar_not_set) {
-    throw GENERATION_ERROR;
+#ifdef DEBUG_EXCEPTIONS
+      printf("[Control::processException] NOTE: VBAR_EL%d has NOT been initialized.\n",EL);
+#endif
+    if (packet->Goal == FOR_TEST)
+      throw GENERATION_ERROR;
   }
 
   return r;
