@@ -10,7 +10,7 @@
 
 #include "uart.h"
 
-#define UART_DEBUG 1
+//#define UART_DEBUG 1
 
 //--------------------------------------------------------------------------------
 // Transmit - write to stdout one char from transmit queue.

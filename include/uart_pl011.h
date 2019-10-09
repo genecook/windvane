@@ -96,10 +96,10 @@ class UART_pl011 : public uart, public memmap_device {
   };
 
   void SetTransmitInterrupt() {
-    printf("TRANSMIT INTERRUPT!\n");
+    //printf("TRANSMIT INTERRUPT!\n");
   };
   void SetReceiveInterrupt() {
-    printf("RECEIVE INTERRUPT\n");
+    //printf("RECEIVE INTERRUPT\n");
   };
 
   bool overrun_interrupt_set() { return (UARTRIS & 0x400) != 0; };

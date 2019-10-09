@@ -15,7 +15,7 @@
 using namespace std;
 
 //#define MEM_DEBUG 1
-#define DEVICE_MEM_DEBUG 1
+//#define DEVICE_MEM_DEBUG 1
 //#define TEST_TLBS 1
 //#define ARMV8_FOUNDATION_MODEL 1
 

@@ -1,6 +1,6 @@
 #include "uart_pl011.h"
 
-#define PL011_DEBUG 1
+//#define PL011_DEBUG 1
 
 //-------------------------------------------------------------------------------------------
 // return index to valid uart register...
@@ -244,9 +244,11 @@ int UART_pl011::Write(unsigned long long PA,unsigned int rval) {
              rcode = -1;
              break;
   }
-  
+ 
+#ifdef PL011_DEBUG
   printf("[UART_pl011::Write] exited, rcode: %d\n",rcode);
-  
+#endif
+
   return rcode;
 }
 

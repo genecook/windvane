@@ -86,7 +86,7 @@ class uart_queue {
    // put 'next' char if there is room in the transmit queue...
 
    bool PutChar(unsigned char sc) {
-     printf("[PutChar] FIFO enabled? %d\n",FIFO_enabled());
+     //printf("[PutChar] FIFO enabled? %d\n",FIFO_enabled());
      if (FIFO_enabled())
        return put_fifo_char(sc);
 
