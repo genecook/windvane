@@ -7,7 +7,7 @@
 #include "a64_instr_enums.h"
 #include "a64_exceptions.h"
 
-#define DEBUG_EXCEPTIONS 1
+//#define DEBUG_EXCEPTIONS 1
 
 //==========================================================================================
 // ExceptionEnables - user control over which exceptions are enabled/disabled...
