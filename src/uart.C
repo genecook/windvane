@@ -12,6 +12,8 @@
 
 //#define UART_DEBUG 1
 
+#define UNBUFFERED 1
+
 //--------------------------------------------------------------------------------
 // Transmit - write to stdout one char from transmit queue.
 //
@@ -74,28 +76,33 @@ void uart::Receive() {
   printf("  setup unbuffered state...\n");
 #endif
 
+  
+#ifdef UNBUFFERED
   struct termios old_tio, new_tio;
 
   /* get the terminal settings for stdin */
   tcgetattr(STDIN_FILENO,&old_tio);
 
-  /* we want to keep the old setting to restore them a the end */
+  /* we want to keep the old setting to restore them at the end */
   new_tio=old_tio;
 
   /* disable canonical mode (buffered i/o) and local echo */
-  new_tio.c_lflag &=(~ICANON & ~ECHO);
+  //new_tio.c_lflag &=(~ICANON & ~ECHO);
+  new_tio.c_lflag &=(~ICANON);
 
   /* set the new settings immediately */
   tcsetattr(STDIN_FILENO,TCSANOW,&new_tio);
+#endif
 
+  
   if ( input_chars_available() ) {
 #ifdef UART_DEBUG
     printf("  get next (unbuffered) input char, queue it up...\n");
 #endif
     unsigned char nc = getchar();
-#ifdef UART_DEBUG
-    printf("  char read: '%c' (0x%x)\n", nc, nc);    
-#endif
+//#ifdef UART_DEBUG
+    //printf("  char read: '%c' (0x%x)\n", nc, nc);
+//#endif
     receive_queue.PutChar(nc);
     if (receive_queue.AboveThreshhold()) {
 #ifdef UART_DEBUG
@@ -109,8 +116,10 @@ void uart::Receive() {
 #endif
   }
 
+#ifdef UNBUFFERED
   /* restore the former settings */
   tcsetattr(STDIN_FILENO,TCSANOW,&old_tio);
+#endif
 
 #ifdef UART_DEBUG
   printf("[uart::Receive] exited.\n");
