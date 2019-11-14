@@ -336,6 +336,7 @@ bool Control::executeFloatSIMD_inner(unsigned int &multiplier) {
 	    
     case FMOV_FP_8_64_128: case FMOV_FP_8_64_128_TO_TOP: 
     case FMOV_SINGLE_FROM_SP_FP_32: case FMOV_FROM_DP_FP_64: case FMOV_SINGLE_TO_SP_FP_32: case FMOV_TO_DP_FP_64:
+    case SIMD_MOVI_IMM_MOD_64:
 
       vfpMove();
       break;
@@ -345,6 +346,7 @@ bool Control::executeFloatSIMD_inner(unsigned int &multiplier) {
     case SIMD_UMOV_32:
     case SIMD_UMOV_64:
       break;
+    
       
     // fp load/store ops don't update the flags...
       
@@ -861,6 +863,11 @@ void Control::vfpMoveImm() {
     case FMOV_IMM_SINGLE_FROM_SP: {
                                    unsigned int imm = (unsigned int) VFPExpandImm(32, packet->imm8.Value());
                                    packet->VDreg.Unsigned(imm);
+                                  }
+                                  break;
+
+    case SIMD_MOVI_IMM_MOD_64:    {
+                                  packet->VDreg.UnsignedLong(0); // hack hack hack
                                   }
                                   break;
     default: break;
