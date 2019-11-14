@@ -30,7 +30,7 @@ fi
 JDK_MODULES=javafx.base,javafx.controls,javafx.fxml,javafx.graphics
 
 if [ -f $STV_HOME/stv.jar ]; then
-    $JAVA_HOME/bin/java --module-path $STV_HOME:$JAVAFX_HOME/lib --add-modules stv,$JDK_MODULES simtrace_viewer.Main
+    $JAVA_HOME/bin/java --module-path $STV_HOME:$JAVAFX_HOME/lib --add-modules stv,$JDK_MODULES simtrace_viewer.Main $*
 else
     echo "simtrace-viewer jar file ($STV_HOME/stv.jar) not found."
 fi
