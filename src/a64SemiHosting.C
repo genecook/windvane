@@ -741,6 +741,10 @@ void a64SemiHosting::GetCmdline() {
       std::cout << "[a64SemiHosting::GetCmdline] aborted. Problems writing cmdline to simulator memory." << std::endl;
     return;
   }
+
+  // also update buffer size to reflect string length...
+ 
+  WriteULL(cmdline_args_block_ptr + 8,strlen(params.cmdline));
   
   rcode = 0;
   
@@ -788,6 +792,7 @@ void a64SemiHosting::HeapInfo() {
   unsigned long long dest = 0;
 
   try {
+    // access the value in X1 as the address of the heapinfo block...
     dest = ReadULL(heapinfo_block_ptr);
     
     if (verbose) printf("[SYS_HEAPINFO] heap-info struct address: 0x%llx\n",dest);
