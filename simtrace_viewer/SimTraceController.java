@@ -1640,6 +1640,7 @@ public class SimTraceController {
 	} else {
 	    // okay, switch to desired core...
             current_core = goto_core;
+	    MyCore.setText( String.format("%d",current_core) );
 	    System.out.printf("Switching view to core: %d...\n", goto_core);     
 	}	
 	gotoCurrentBlock();
