@@ -225,11 +225,14 @@ bool X64Simulator::SimulateViaReadyQueue(int &total_num_instrs, int &total_num_i
      // if 'free-running' test will end at max-instrs plus a few extra instructions needed to 'halt' each core...
    } else {
      // gasp! extra instrs added to halt a core better not exceed 10 instrs per core!!!
-     max_instrs_per_core += 10; // add a few extra instrs to max-count to allow test to end close to max instrs...
+     if (max_instrs_per_core > 0)
+       max_instrs_per_core += 10; // add a few extra instrs to max-count to allow test to end close to max instrs...
    }
    
    bool do_instr_counts = max_instrs_per_core >= 0; // negative max instrs per core means run forever...
-   
+  
+   //printf("[SimulateViaReadyQueue] do_instr_counts? %d\n",do_instr_counts);
+
    while( (!do_instr_counts || (total_num_instrs < (max_instrs_per_core * num_cores))) && !sim_err && cores_are_running) {
      //printf("[SimulateViaReadyQueue] iteration: %d\n",total_num_iterations);
      
@@ -755,7 +758,7 @@ int X64Simulator::SimulateNextInstruction(unsigned int cpuid,int phase,Packet * 
         }	  
         if (SemihostRequest(tbuf)) {
           // handle semihosting operation...
-          //printf("handle semihosting operation...\n");
+          //printf("handle semihosting operation at PC 0x%llx...\n",PC);
           if (HandleSemihostingOperation(cpuid,ipacket) == 0x100) {
 	    // application has exited...
             printf("application has exited...\n");
