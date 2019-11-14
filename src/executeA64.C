@@ -2367,6 +2367,9 @@ void Control::LoadStoreRegisterUnscaled() {
 void Control::LoadStoreRegisterOffset() {
   int scale = packet->size.Value();
 
+  if (packet->A64InstrIndex == PRFM_IMM_REG) {
+    // PRFM instr - ignore option field...
+  } else {
   switch((int) packet->option.Value()) {
      case 0:
      case 1:
@@ -2378,7 +2381,8 @@ void Control::LoadStoreRegisterOffset() {
      default: // valid option value for these instructions...
               break;
   }
-
+  }
+  
   int extend_type = DecodeRegExtend(packet->option.Value());
   int shift = packet->S.Value() == 1 ? scale : 0;
 
