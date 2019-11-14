@@ -62,7 +62,7 @@ clean:
 #   cp simtrace_viewer/simtrace_viewer.sh bin
 #   cp stv.jar bin
 
-simtrace_viewer.jar:
+simtrace_viewer.jar: Main.class ${VIEWER_CLASSES}
 	cd ..;ln -sf proto/scaffold_SAPI;${JAR_EXEC} cvfm simtrace_viewer.jar simtrace_viewer/SimTraceViewer.mf simtrace_viewer/*.class simtrace_viewer/simtrace_viewer.fxml \
         simtrace_viewer/images/logo.png simtrace_viewer/images/logo.jpg simtrace_viewer/css/simtrace.css simtrace_viewer/css/background.jpg \
         scaffold_SAPI/*.class
