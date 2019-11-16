@@ -16,7 +16,7 @@ The output from *a64sim* may include an _ELF_ file and/or a _simulation trace_.
 The _a64sim_ *simtrace-viewer* is a graphical viewer that may be used to load and study the _simulation trace_
 produced by *a64sim*.
 
-link:a64sim_license.html[License, Copyright Notice - Please read, thanks]
+link:a64sim_license.adoc[License, Copyright Notice - Please read, thanks]
 
 
 Requirements
