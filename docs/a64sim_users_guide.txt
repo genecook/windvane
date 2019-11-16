@@ -5,6 +5,8 @@ a64sim
 :Date:      9/30/2019
 :Revision:  alpha
 
+link:a64sim_license.adoc[License, Copyright Notice - Please read, thanks]
+
 Copyright Notice
 ----------------
 Copyright  © 2019 Tuleta Software, Inc.
