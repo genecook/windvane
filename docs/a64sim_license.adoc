@@ -13,10 +13,6 @@ License to use this software is granted, free of charge, on a individual, non-co
 basis only. Individuals are free to download and use the software free of charge, for
 personal educational use only.
 
-Usage, redistribution or deployment of this software for commercial purposes will require
-a commercial license. Licenses are available both for the (existing) binary release, or
-for a (pending) source code release.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL TULETA BE LIABLE FOR ANY CLAIM, DAMAGES
