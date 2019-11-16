@@ -17,7 +17,7 @@ Memory accessed during simulation is dynamically allocated up to the configured 
 
 A simulation trace facility allows the user to create a trace of execution for a program under simulation.
 
-Programs to be simulated (object file or binary) may also be debugged via the *a64sim* _gdb server- interface.
+Programs to be simulated (object file or binary) may also be debugged via the *a64sim* _gdb_ server- interface.
 
 Salient features of the *a64sim* simulator:
 
