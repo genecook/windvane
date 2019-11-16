@@ -45,5 +45,5 @@ http://dunkels.com/adam/ubasic/[Tiny Basic in C]
 
 https://github.com/marcobambini/gravity[Gravity Programming Language]
 
-http://janeaddamspeace.org/[Jane Addams Peace Association]
+http://janeaddamspeace.org/[Jane Addams Peace Association] - peace.
 
