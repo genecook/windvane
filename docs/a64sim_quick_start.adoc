@@ -84,8 +84,6 @@ This assembler was configured for a target of `aarch64-linux-gnu'.
 
 Quick start
 -----------
-*OOPS! THE EXAMPLES DIRECTORY HAS YET TO BE MOVED OVER FROM THE OLD REPOSITORY.*
-
 Assuming you are in the _examples_ directory, _cd_ into the *example1* sub-directory.
 This example consists of a three statement assembly language test (_add_sequence.s_) plus
 a _makefile_ used to build and run the test. To assemble the test, run _make_:
