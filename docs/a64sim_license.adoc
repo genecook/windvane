@@ -11,7 +11,7 @@ Copyright  © 2019 Tuleta Software, Inc.
 
 License to use this software is granted, free of charge, on a individual, non-commercial
 basis only. Individuals are free to download and use the software free of charge, for
-personal educational use only.
+*personal educational use only*.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
